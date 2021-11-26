@@ -1,8 +1,5 @@
 """
 Support for Wi-Fi enabled LG Hombot robot vacuum cleaner.
-
-For more details about this platform, please refer to the documentation
-https://home-assistant.io/components/vacuum.lg_hombot/
 """
 import asyncio
 import urllib.parse
@@ -49,8 +46,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 # Commonly supported features
 SUPPORT_HOMBOT = SUPPORT_BATTERY | SUPPORT_PAUSE | SUPPORT_RETURN_HOME | \
-                 SUPPORT_SEND_COMMAND | SUPPORT_STATUS | SUPPORT_STOP | \
-                 SUPPORT_TURN_OFF | SUPPORT_TURN_ON | SUPPORT_FAN_SPEED
+    SUPPORT_SEND_COMMAND | SUPPORT_STATUS | SUPPORT_STOP | \
+    SUPPORT_TURN_OFF | SUPPORT_TURN_ON | SUPPORT_FAN_SPEED
 
 
 @asyncio.coroutine
@@ -65,8 +62,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     _LOGGER.info("Creating LG Hombot object %s (%s:%s)",
                  name, host, port)
-    #TODO Async
-    #yield from hass.async_add_job(roomba.connect)
+    # TODO Async
+    # yield from hass.async_add_job(roomba.connect)
     hombot_vac = HombotVacuum(name, host, port)
     hass.data[PLATFORM][name] = hombot_vac
 

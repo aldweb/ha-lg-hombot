@@ -1,5 +1,4 @@
 # LG Hombot/Roboking Component for Home Assistant
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://hacs.xyz/)
 
 The LG Hombot `vacuum` platform allows you to control the state of your LG Hombot robot vacuum.
 This robot is also called Roboking in some countries.
@@ -9,12 +8,12 @@ You first have to plug a wifi dongle to your robot and [install Wifi support](ht
 You can display various data like the robot status or the charging level via template sensors.
 
 ## Installation
-Recommended: use [HACS](https://hacs.xyz/).
 
 Manual: copy `custom_components/lg_hombot` folder into your `custom_components`.
 
 ## Configuration
-```
+
+```yaml
 vacuum:
   - platform: lg_hombot
     host: your_hombot_ip_address
@@ -36,8 +35,10 @@ sensor:
 ```
 
 ## Lovelace card
+
 You can use a simple `Entities` card like:
-```
+
+```yaml
 entities:
   - entity: vacuum.hombot
   - entity: sensor.hombot_status
@@ -45,3 +46,7 @@ entities:
 title: Vacuum
 type: entities
 ```
+
+## Credits
+
+This is a fork of @ericpignet's LG Hombot integration. Since the original implementation is no longer compatible with the latest versions of Home Assistant and @ericpignet no longer maintains the project, I have forked and upgraded the project to the latest version of Home Assistant.
