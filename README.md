@@ -39,12 +39,37 @@ sensor:
 You can use a simple `Entities` card like:
 
 ```yaml
+type: entities
+title: Vacuum
 entities:
   - entity: vacuum.hombot
   - entity: sensor.hombot_status
   - entity: sensor.hombot_battery
-title: Vacuum
-type: entities
+```
+
+## Automation
+
+```yaml
+id: "...." # use https://www.guidgenerator.com 
+
+alias: "Start Hombot"
+
+trigger:
+  - platform: time
+    at: "09:15"
+
+condition:
+  - condition: time
+    weekday:
+      - tue
+      - sun
+
+action:
+  - service: vacuum.turn_on
+    target:
+      entity_id: vacuum.hombot
+
+mode: single
 ```
 
 ## Credits
