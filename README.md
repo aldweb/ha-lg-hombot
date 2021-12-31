@@ -49,4 +49,4 @@ type: entities
 
 ## Credits
 
-This is a fork of @ericpignet's LG Hombot integration. Since the original implementation is no longer compatible with the latest versions of Home Assistant and @ericpignet no longer maintains the project, I have forked and upgraded the project to the latest version of Home Assistant.
+This is a fork of [ericpignet](https://github.com/ericpignet)'s LG Hombot integration. Since the original implementation is no longer compatible with the latest versions of Home Assistant and [ericpignet](https://github.com/ericpignet) no longer maintains the project, I have forked and upgraded the project to the latest version of Home Assistant.
