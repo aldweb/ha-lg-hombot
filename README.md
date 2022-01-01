@@ -1,5 +1,7 @@
 # LG Hombot/Roboking Component for Home Assistant
 
+[![Validate Hassfest](https://github.com/plakna/ha-lg-hombot/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/plakna/ha-lg-hombot/actions/workflows/hassfest.yaml) [![Validate HACS](https://github.com/plakna/ha-lg-hombot/actions/workflows/hacs.yaml/badge.svg)](https://github.com/plakna/ha-lg-hombot/actions/workflows/hacs.yaml) 
+
 The LG Hombot `vacuum` platform allows you to control the state of your LG Hombot robot vacuum.
 This robot is also called Roboking in some countries.
 
@@ -74,4 +76,4 @@ mode: single
 
 ## Credits
 
-This is a fork of [ericpignet](https://github.com/ericpignet)'s LG Hombot integration. Since the original implementation is no longer compatible with the latest versions of Home Assistant and [ericpignet](https://github.com/ericpignet) no longer maintains the project, I have forked and upgraded the project to the latest version of Home Assistant.
+This is a fork of [ericpignet](https://github.com/ericpignet)'s LG Hombot integration. Since the original implementation is no longer compatible with the latest version of Home Assistant and [ericpignet](https://github.com/ericpignet) no longer maintains the project, I forked and upgraded the project.
