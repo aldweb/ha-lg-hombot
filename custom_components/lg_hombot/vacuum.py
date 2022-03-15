@@ -135,7 +135,7 @@ class HombotVacuum(VacuumEntity):
         try:
             websession = async_get_clientsession(self.hass)
 
-            with async_timeout.timeout(10, loop=self.hass.loop):
+            with async_timeout.timeout(10):
                 url = 'http://{}:{}/json.cgi?{}'.format(self._host, self._port, urllib.parse.quote(command, safe=':'))
                 _LOGGER.debug(url)
                 webresponse = yield from websession.get(url)
@@ -224,7 +224,7 @@ class HombotVacuum(VacuumEntity):
         try:
             websession = async_get_clientsession(self.hass)
 
-            with async_timeout.timeout(10, loop=self.hass.loop):
+            with async_timeout.timeout(10):
                 url = 'http://{}:{}/status.txt'.format(self._host, self._port)
                 webresponse = yield from websession.get(url)
                 bytesresponse = yield from webresponse.read()

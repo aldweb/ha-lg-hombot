@@ -18,22 +18,17 @@ Manual: copy `custom_components/lg_hombot` folder into your `custom_components`.
 ```yaml
 vacuum:
   - platform: lg_hombot
-    host: your_hombot_ip_address
-    port: 6260
+    name: hombot # entity name of your hombot
+    host: your_hombot_ip_address # ip address of your hombot
+    port: 6260 # port of your hombot web interface
 
-sensor:
-  - platform: template
-    sensors:
-      hombot_battery:
-        friendly_name: Battery
-        entity_id: vacuum.hombot
-        unit_of_measurement: '%'
-        value_template: "{{ states.vacuum.hombot.attributes.battery_level }}"
-        icon_template: "{{ states.vacuum.hombot.attributes.battery_icon }}"
-      hombot_status:
-        friendly_name: Status
-        entity_id: vacuum.hombot
-        value_template: "{{ states.vacuum.hombot.attributes.status }}"
+template:
+  - sensor:
+      - name: "Hombot Battery"
+        unit_of_measurement: "%"
+        state: "{{ states.vacuum.hombot.attributes.battery_level }}"
+      - name: "Hombot Status"
+        state: "{{ states.vacuum.hombot.attributes.status }}"
 ```
 
 ## Lovelace card
