@@ -1,5 +1,5 @@
 {
-    "name": "LG Hombot Vacuum Cleaner",
+    "name": "LG Hombot",
     "domain": "lg_hombot",
     "version": "0.0.6",
     "iot_class": "local_polling",
@@ -10,5 +10,6 @@
     "codeowners": [
         "@ericpignet",
         "@plakna"
-    ]
+    ],
+    "config_flow": true
 }
