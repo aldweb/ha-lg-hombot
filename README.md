@@ -1,4 +1,4 @@
-Attention: Breaking Change in Version 1.0.0 - Please note that in this version, a deprecated function has been removed (*.yaml file) and is no longer supported.
+⚠️ **Attention: Breaking Change in Version 1.0.0 - Please note that in this version, a deprecated function has been removed (*.yaml file) and is no longer supported.**
 
 # LG Hombot for Home Assistant
 
@@ -70,4 +70,4 @@ mode: single
 
 ## Credits
 
-This is a fork of [ericpignet](https://github.com/ericpignet)'s LG Hombot integration. Since the original implementation is no longer compatible with the latest version of Home Assistant and [ericpignet](https://github.com/ericpignet) no longer maintains the project, I forked and upgraded the project.
+This is a fork of [ericpignet](https://github.com/ericpignet)'s LG Hombot integration. Since the original implementation is no longer compatible with the latest version of Home Assistant and is no longer actively maintained by ericpignet, I have taken the initiative to fork the project and provide necessary updates.
