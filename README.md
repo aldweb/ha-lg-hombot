@@ -1,3 +1,5 @@
+Attention: Breaking Change in Version 1.0.0 - Please note that in this version, a deprecated function has been removed (*.yaml file) and is no longer supported.
+
 # LG Hombot for Home Assistant
 
 [![Validate Hassfest](https://github.com/plakna/ha-lg-hombot/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/plakna/ha-lg-hombot/actions/workflows/hassfest.yaml) [![Validate HACS](https://github.com/plakna/ha-lg-hombot/actions/workflows/hacs.yaml/badge.svg)](https://github.com/plakna/ha-lg-hombot/actions/workflows/hacs.yaml) 
@@ -60,6 +62,11 @@ action:
 
 mode: single
 ```
+
+## Breaking Changes
+
+- Version 1.0.0:
+  - Removal of yaml file support: This function is no longer supported and should not be used anymore.
 
 ## Credits
 
