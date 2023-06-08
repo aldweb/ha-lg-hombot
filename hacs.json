@@ -3,6 +3,6 @@
     "domains": [
         "vacuum"
     ],
-    "homeassistant": "2023.06.0",
+    "homeassistant": "2023.6.0",
     "render_readme": true
 }
