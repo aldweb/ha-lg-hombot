@@ -1,8 +1,5 @@
 {
-    "name": "LG Hombot Vacuum Cleaner",
-    "domains": [
-        "vacuum"
-    ],
+    "name": "LG Hombot",
     "homeassistant": "2023.6.0",
     "render_readme": true
 }

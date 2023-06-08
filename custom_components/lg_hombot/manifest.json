@@ -1,15 +1,15 @@
 {
-    "name": "LG Hombot",
     "domain": "lg_hombot",
-    "version": "0.0.6",
-    "iot_class": "local_polling",
-    "documentation": "https://github.com/plakna/ha-lg-hombot",
-    "issue_tracker": "https://github.com/plakna/ha-lg-hombot/issues",
-    "requirements": [],
-    "dependencies": [],
+    "name": "LG Hombot",
     "codeowners": [
         "@ericpignet",
         "@plakna"
     ],
-    "config_flow": true
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/plakna/ha-lg-hombot",
+    "iot_class": "local_polling",
+    "issue_tracker": "https://github.com/plakna/ha-lg-hombot/issues",
+    "requirements": [],
+    "version": "1.0.1"
 }
