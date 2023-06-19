@@ -52,7 +52,8 @@ class HombotVacuum(VacuumEntity):
             },
             name=self._name,
             manufacturer="LG",
-            model="Hombot"
+            model="Hombot",
+            configuration_url=self._url
         )
         return device_info
 
