@@ -56,7 +56,7 @@ condition:
       - sun
 
 action:
-  - service: vacuum.turn_on
+  - service: vacuum.start
     target:
       entity_id: vacuum.hombot
 
@@ -67,6 +67,9 @@ mode: single
 
 - Version 1.0.0:
   - Removal of yaml file support: This function is no longer supported and should not be used anymore.
+- Version 1.0.3:
+  - The service vacuum.turn_on has been changed to vacuum.start (deprecated).
+  - The status has been standardized according to [HomeAssistant conventions](https://developers.home-assistant.io/docs/core/entity/vacuum/#states).
 
 ## Credits
 
