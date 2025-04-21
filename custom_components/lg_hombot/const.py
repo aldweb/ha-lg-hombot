@@ -1,6 +1,6 @@
 """Constants for LG Hombot integration."""
 
-from homeassistant.components.vacuum import VacuumEntityFeature, StateVacuumEntity
+from homeassistant.components.vacuum import VacuumEntityFeature
 
 # hass 2025.1
 try:
