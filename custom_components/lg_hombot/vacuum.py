@@ -1,7 +1,15 @@
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
-from homeassistant.components.vacuum import STATE_CLEANING, STATE_DOCKED, STATE_PAUSED, STATE_RETURNING, StateVacuumEntity
+# hass 2025.1
+try:
+    from homeassistant.components.vacuum import VacuumActivity
+except (ModuleNotFoundError, ImportError):
+    class VacuumActivity(StrEnum):
+        CLEANING = "cleaning"
+        DOCKED = "docked"
+        PAUSE = "pause"
+        RETURNING = "returning"
 
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -105,36 +113,36 @@ class HombotVacuum(StateVacuumEntity):
         """Converts the status of hombot to that of HomeAssistant -> see https://developers.home-assistant.io/docs/core/entity/vacuum/#states"""
         match current_state:
             case "CHARGING":
-                return STATE_DOCKED
+                return VacuumActivity.DOCKED
             case "BACKMOVING_INIT":
-                return STATE_CLEANING
+                return VacuumActivity.CLEANING
             case "WORKING":
-                return STATE_CLEANING
+                return VacuumActivity.CLEANING
             case "PAUSE":
-                return STATE_PAUSED
+                return VacuumActivity.PAUSED
             case "HOMING":
-                return STATE_RETURNING
+                return VacuumActivity.RETURNING
             case"DOCKING":
-                return STATE_RETURNING
+                return VacuumActivity.RETURNING
 
     async def async_start(self, **kwargs: Any) -> None:
         """Turn the vacuum on."""
-        self._state = STATE_CLEANING
+        self._state = VacuumActivity.CLEANING
         await self.query('{"COMMAND":"CLEAN_START"}')
 
     async def async_pause(self, **kwargs: Any) -> None:
         """Turn the vacuum on."""
-        self._state = STATE_PAUSED
+        self._state = VacuumActivity.PAUSED
         await self.query('{"COMMAND":"PAUSE"}')
 
     async def async_return_to_base(self, **kwargs: Any) -> None:
         """Turn the vacuum off."""
-        self._state = STATE_RETURNING
+        self._state = VacuumActivity.RETURNING
         await self.query('{"COMMAND":"HOMING"}')
 
     async def async_stop(self, **kwargs: Any) -> None:
         """Turn the vacuum off."""
-        self._state = STATE_RETURNING
+        self._state = VacuumActivity.RETURNING
         await self.query('{"COMMAND":"HOMING"}')
 
     async def async_set_fan_speed(self, fan_speed: str, **kwargs: Any) -> None:
