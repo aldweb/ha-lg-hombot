@@ -1,16 +1,6 @@
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
-# hass 2025.1
-try:
-    from homeassistant.components.vacuum import VacuumActivity
-except (ModuleNotFoundError, ImportError):
-    class VacuumActivity(StrEnum):
-        CLEANING = "cleaning"
-        DOCKED = "docked"
-        PAUSE = "pause"
-        RETURNING = "returning"
-
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -18,7 +8,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from typing import Any
 from urllib.parse import quote
 
-from .const import DOMAIN, SPEED_NORMAL, SPEED_TURBO, SUPPORTED_SERVICES, SUPPORTED_SPEEDS
+from .const import DOMAIN, SPEED_NORMAL, SPEED_TURBO, SUPPORTED_SERVICES, SUPPORTED_SPEEDS, VacuumActivity
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entites: AddEntitiesCallback) -> None:
@@ -32,7 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async_add_entites([hombot_vac])
 
 
-class HombotVacuum(VacuumActivity):
+class HombotVacuum(StateVacuumEntity):
     """Representation of a Hombot vacuum cleaner robot."""
 
     def __init__(self, name: str, url: str) -> None:
