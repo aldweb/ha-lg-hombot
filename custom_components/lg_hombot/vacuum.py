@@ -1,6 +1,8 @@
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
+from homeassistant.components.vacuum import StateVacuumEntity
+
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
