@@ -32,7 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async_add_entites([hombot_vac])
 
 
-class HombotVacuum(StateVacuumEntity):
+class HombotVacuum(VacuumEntity):
     """Representation of a Hombot vacuum cleaner robot."""
 
     def __init__(self, name: str, url: str) -> None:
