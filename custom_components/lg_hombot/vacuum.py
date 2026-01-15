@@ -10,7 +10,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from typing import Any
 from urllib.parse import quote
 
-from .const import DOMAIN, SPEED_NORMAL, SPEED_TURBO, SUPPORTED_SERVICES, SUPPORTED_SPEEDS, VacuumActivity
+from .const import DOMAIN, SPEED_NORMAL, SPEED_TURBO, SUPPORTED_SERVICES, SUPPORTED_SPEEDS
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entites: AddEntitiesCallback) -> None:
@@ -96,14 +96,14 @@ class HombotVacuum(StateVacuumEntity):
 
         # assign properties
         self._activity = self.convert_state(attributes.get("JSON_ROBOT_STATE"))
-        self._battery_level = int(attributes("JSON_BATTPERC"))
-        if attributes["JSON_TURBO"] == "true":
+        self._battery_level = int(attributes.get("JSON_BATTPERC", "0"))
+        if attributes.get("JSON_TURBO") == "true":
             self._fan_speed = SPEED_TURBO
         else:
             self._fan_speed = SPEED_NORMAL
 
     def convert_state(self, current_state) -> VacuumActivity:
-        """Converts the status of hombot to that of HomeAssistant -> see https://developers.home-assistant.io/docs/core/entity/vacuum/#states"""
+        """Convert the Hombot status to Home Assistant VacuumActivity."""
         match current_state:
             case "CHARGING":
                 return VacuumActivity.DOCKED
