@@ -96,7 +96,7 @@ class HombotVacuum(StateVacuumEntity):
 
         # assign properties
         self._activity = self.convert_state(attributes.get("JSON_ROBOT_STATE"))
-        self._battery_level = int(attributes.get("JSON_BATTPERC", "0"))
+        self._battery_level = int(attributes.get("JSON_BATTPERC"))
         if attributes.get["JSON_TURBO"] == "true":
             self._fan_speed = SPEED_TURBO
         else:
