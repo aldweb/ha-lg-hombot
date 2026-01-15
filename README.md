@@ -1,5 +1,5 @@
-Please note that this is fork from https://github.com/plakna/ha-lg-hombot to have the LG HomBot work with Home Assistant 2026.1
-
+## Please note that this is fork from https://github.com/plakna/ha-lg-hombot to have the LG HomBot work with Home Assistant 2026.1
+##
 
 
 
