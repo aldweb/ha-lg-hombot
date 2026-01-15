@@ -1,3 +1,8 @@
+Please note that this is fork from https://github.com/plakna/ha-lg-hombot to have the LG HomBot work with Home Assistant 2026.1
+
+
+
+
 ⚠️ **Attention: Breaking Change in Version 1.0.0 - Please note that in this version, a deprecated function has been removed (*.yaml file) and is no longer supported.**
 
 # LG Hombot for Home Assistant
