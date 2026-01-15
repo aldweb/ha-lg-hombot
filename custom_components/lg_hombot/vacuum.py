@@ -1,7 +1,7 @@
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
-from homeassistant.components.vacuum import StateVacuumEntity
+from homeassistant.components.vacuum import StateVacuumEntity, VacuumActivity
 
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -35,14 +35,15 @@ class HombotVacuum(StateVacuumEntity):
 
         self._url = url
 
-        self._state = None
+        self._activity = VacuumActivity.IDLE
         self._battery_level = None
         self._fan_speed = SPEED_NORMAL
         self._fan_speed_list = SUPPORTED_SPEEDS
+        self._attr_unique_id = "hombot_" + self._url
 
     @property
     def unique_id(self) -> str | None:
-        return "hombot_" + self._url
+        return self._attr_unique_id
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -59,9 +60,9 @@ class HombotVacuum(StateVacuumEntity):
         return device_info
 
     @property
-    def state(self) -> str:
-        """Return the status of the vacuum."""
-        return self._state
+    def activity(self) -> VacuumActivity:
+        """Return the activity of the vacuum."""
+        return self._activity
 
     @property
     def battery_level(self) -> int:
@@ -76,7 +77,7 @@ class HombotVacuum(StateVacuumEntity):
     def fan_speed_list(self) -> list[str]:
         return self._fan_speed_list
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         """Update status properties."""
         # generate url
         url = self._url + "status.txt"
@@ -94,14 +95,14 @@ class HombotVacuum(StateVacuumEntity):
             attributes[name] = var.strip('"')
 
         # assign properties
-        self._state = self.convert_state(attributes["JSON_ROBOT_STATE"])
-        self._battery_level = int(attributes["JSON_BATTPERC"])
-        if attributes["JSON_TURBO"] == "true":
+        self._activity = self.convert_state(attributes.get("JSON_ROBOT_STATE"))
+        self._battery_level = int(attributes.get("JSON_BATTPERC", "0"))
+        if attributes.get["JSON_TURBO"] == "true":
             self._fan_speed = SPEED_TURBO
         else:
             self._fan_speed = SPEED_NORMAL
 
-    def convert_state(self, current_state) -> str:
+    def convert_state(self, current_state) -> VacuumActivity:
         """Converts the status of hombot to that of HomeAssistant -> see https://developers.home-assistant.io/docs/core/entity/vacuum/#states"""
         match current_state:
             case "CHARGING":
@@ -116,15 +117,17 @@ class HombotVacuum(StateVacuumEntity):
                 return VacuumActivity.RETURNING
             case"DOCKING":
                 return VacuumActivity.RETURNING
+            case _:
+                return VacuumActivity.IDLE
 
     async def async_start(self, **kwargs: Any) -> None:
         """Turn the vacuum on."""
-        self._state = VacuumActivity.CLEANING
+        self._activity = VacuumActivity.CLEANING
         await self.query('{"COMMAND":"CLEAN_START"}')
 
     async def async_pause(self, **kwargs: Any) -> None:
         """Turn the vacuum on."""
-        self._state = VacuumActivity.PAUSED
+        self._activity = VacuumActivity.PAUSED
         await self.query('{"COMMAND":"PAUSE"}')
 
     async def async_return_to_base(self, **kwargs: Any) -> None:
@@ -134,7 +137,7 @@ class HombotVacuum(StateVacuumEntity):
 
     async def async_stop(self, **kwargs: Any) -> None:
         """Turn the vacuum off."""
-        self._state = VacuumActivity.RETURNING
+        self._activity = VacuumActivity.RETURNING
         await self.query('{"COMMAND":"HOMING"}')
 
     async def async_set_fan_speed(self, fan_speed: str, **kwargs: Any) -> None:
@@ -145,7 +148,7 @@ class HombotVacuum(StateVacuumEntity):
         else:
             await self.query('{"COMMAND":{"TURBO":"false"}}')
 
-    async def query(self, command):
+    async def query(self, command) -> bool:
         """Execute command."""
         # generate url
         url = self._url + "json.cgi?" + quote(command)
