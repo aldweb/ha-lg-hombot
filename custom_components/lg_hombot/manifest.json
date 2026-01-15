@@ -9,9 +9,9 @@
     ],
     "config_flow": true,
     "dependencies": [],
-    "documentation": "https://github.com/plakna/ha-lg-hombot",
+    "documentation": "https://github.com/aldweb/ha-lg-hombot",
     "iot_class": "local_polling",
-    "issue_tracker": "https://github.com/plakna/ha-lg-hombot/issues",
+    "issue_tracker": "https://github.com/aldweb/ha-lg-hombot/issues",
     "requirements": [],
     "version": "1.0.2"
 }
