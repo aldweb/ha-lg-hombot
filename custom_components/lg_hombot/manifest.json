@@ -13,5 +13,5 @@
     "iot_class": "local_polling",
     "issue_tracker": "https://github.com/aldweb/ha-lg-hombot/issues",
     "requirements": [],
-    "version": "1.0.2"
+    "version": "2.0.0"
 }
