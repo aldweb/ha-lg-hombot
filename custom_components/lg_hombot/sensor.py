@@ -77,7 +77,11 @@ class HombotBatterySensor(SensorEntity):
             battery_level = attributes.get("JSON_BATTPERC")
             if battery_level is not None:
                 self._attr_native_value = int(battery_level)
-
+                
+            robot_state = attributes.get("JSON_ROBOT_STATE")
+            self._attr_extra_state_attributes = {
+                "charging": robot_state == "CHARGING"
+                
         except Exception:
             self._attr_native_value = None
           
