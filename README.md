@@ -1,4 +1,4 @@
-# Please note that this is fork from https://github.com/plakna/ha-lg-hombot to have the LG HomBot work with Home Assistant 2026.8
+### Please note that this is fork from https://github.com/plakna/ha-lg-hombot to have the LG HomBot work with Home Assistant 2026.8
 
 ⚠️ **BREAKING CHANGE in Version 2.0.0** - Battery information has been migrated to a separate sensor entity to comply with Home Assistant 2026.8 requirements. See [migration guide](#migration-from-version-1x-to-20) below.
 
