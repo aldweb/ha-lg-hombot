@@ -6,6 +6,8 @@ from homeassistant.components.vacuum import VacuumEntityFeature
 try:
     from homeassistant.components.vacuum import VacuumActivity
 except (ModuleNotFoundError, ImportError):
+    from enum import StrEnum
+    
     class VacuumActivity(StrEnum):
         CLEANING = "cleaning"
         DOCKED = "docked"
