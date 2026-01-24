@@ -2,6 +2,7 @@
 
 ⚠️ **BREAKING CHANGE in Version 2.0.0** - Battery information has been migrated to a separate sensor entity to comply with Home Assistant 2026.8 requirements. See [migration guide](#migration-from-version-1x-to-20) below.
 
+
 # LG Hombot for Home Assistant
 
 [![Validate Hassfest](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hassfest.yaml) [![Validate HACS](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hacs.yaml/badge.svg)](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hacs.yaml) 
