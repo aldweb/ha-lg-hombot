@@ -65,11 +65,6 @@ class HombotVacuum(StateVacuumEntity):
         return self._activity
 
     @property
-    def battery_level(self) -> int:
-        """Return the status of the vacuum."""
-        return self._battery_level
-
-    @property
     def fan_speed(self) -> str | None:
         return self._fan_speed
 
