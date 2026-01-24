@@ -36,7 +36,6 @@ class HombotVacuum(StateVacuumEntity):
         self._url = url
 
         self._activity = VacuumActivity.IDLE
-        self._battery_level = None
         self._fan_speed = SPEED_NORMAL
         self._fan_speed_list = SUPPORTED_SPEEDS
         self._attr_unique_id = "hombot_" + self._url
@@ -65,11 +64,6 @@ class HombotVacuum(StateVacuumEntity):
         return self._activity
 
     @property
-    def battery_level(self) -> int:
-        """Return the status of the vacuum."""
-        return self._battery_level
-
-    @property
     def fan_speed(self) -> str | None:
         return self._fan_speed
 
@@ -96,7 +90,6 @@ class HombotVacuum(StateVacuumEntity):
 
         # assign properties
         self._activity = self.convert_state(attributes.get("JSON_ROBOT_STATE"))
-        self._battery_level = int(attributes.get("JSON_BATTPERC", "0"))
         if attributes.get("JSON_TURBO") == "true":
             self._fan_speed = SPEED_TURBO
         else:
