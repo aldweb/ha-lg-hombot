@@ -95,6 +95,15 @@ class HombotVacuum(StateVacuumEntity):
         else:
             self._fan_speed = SPEED_NORMAL
 
+        self._attr_extra_state_attributes = {
+            "repeat_mode": attributes.get("JSON_REPEAT") == "true",
+            "cleaning_mode": attributes.get("JSON_MODE"),
+            "nickname": attributes.get("JSON_NICKNAME"),
+            "firmware_version": attributes.get("JSON_VERSION"),
+            "last_clean": attributes.get("CLREC_LAST_CLEAN"),
+            "total_cleanings": attributes.get("CLREC_CURRENTBUMPING")
+        }
+    
     def convert_state(self, current_state) -> VacuumActivity:
         """Convert the Hombot status to Home Assistant VacuumActivity."""
         match current_state:
