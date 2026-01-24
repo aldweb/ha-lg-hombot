@@ -7,7 +7,7 @@
 
 [![Validate Hassfest](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hassfest.yaml) [![Validate HACS](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hacs.yaml/badge.svg)](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hacs.yaml) 
 
-<img src="https://raw.githubusercontent.com/aldweb/ha-lg-hombot/master/images/lg_hombot.jpg" align="left" width="200" style="margin-right: 20px; margin-bottom: 20px;">
+<img src="https://raw.githubusercontent.com/aldweb/ha-lg-hombot/master/images/lg_hombot.png" align="left" width="200" style="margin-right: 20px; margin-bottom: 20px;">
 
 This LG Hombot integration enables you to control and monitor your LG Hombot robot vacuum, also known as Roboking in some countries.
 
