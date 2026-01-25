@@ -3,6 +3,8 @@
     "name": "LG Hombot",
     "version": "2026.1.0",
     "codeowners": [
+        "@ericpignet",
+        "@plakna",        
         "aldweb"
     ],
     "config_flow": true,
