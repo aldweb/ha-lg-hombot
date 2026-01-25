@@ -1,6 +1,5 @@
 {
   "name": "LG Hombot",
   "render_readme": true,
-  "domains": ["vacuum", "sensor"],
   "homeassistant": "2026.1.0"
 }
