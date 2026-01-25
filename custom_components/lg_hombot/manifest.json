@@ -10,6 +10,7 @@
     "config_flow": true,
     "dependencies": [],
     "documentation": "https://github.com/aldweb/ha-lg-hombot",
+    "integration_type": "device",    
     "iot_class": "local_polling",
     "issue_tracker": "https://github.com/aldweb/ha-lg-hombot/issues",
     "requirements": [],
