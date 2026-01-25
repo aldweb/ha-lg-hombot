@@ -5,7 +5,7 @@
     "codeowners": [
         "@ericpignet",
         "@plakna",        
-        "aldweb"
+        "@aldweb"
     ],
     "config_flow": true,
     "dependencies": [],
