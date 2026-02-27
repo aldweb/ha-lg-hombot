@@ -5,7 +5,10 @@
 
 # LG Hombot for Home Assistant
 
-[![Validate Hassfest](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hassfest.yaml) [![Validate HACS](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hacs.yaml/badge.svg)](https://github.com/aldweb/ha-lg-hombot/actions/workflows/hacs.yaml) 
+[![Works with Home Assistant](https://img.shields.io/badge/Works%20with-Home%20Assistant-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?logo=homeassistantcommunitystore&logoColor=white)](https://github.com/hacs/integration)
+[![Latest Version](https://img.shields.io/github/release/aldweb/ha-lg-hombot.svg?logo=github&color=blue)](https://github.com/aldweb/ha-lg-hombot/releases)
+[![License](https://img.shields.io/github/license/aldweb/ha-lg-hombot?logo=mit&color=yellow)](https://github.com/aldweb/ha-lg-hombot/blob/main/LICENSE)
 
 <img src="https://raw.githubusercontent.com/aldweb/ha-lg-hombot/master/images/lg_hombot.png" align="left" width="200" style="margin-right: 20px; margin-bottom: 20px;">
 
