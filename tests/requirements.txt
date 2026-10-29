@@ -1,0 +1,6 @@
+# Isolated test dependencies for local pytest runs only.
+# Not required by Home Assistant; Pillow is already a Home Assistant Core dependency.
+aiohttp>=3.9
+pillow>=10
+pytest>=8
+pytest-asyncio>=0.23
