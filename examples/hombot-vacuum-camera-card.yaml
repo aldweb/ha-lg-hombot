@@ -1,0 +1,127 @@
+# HomBot vacuum + camera overview (manual Lovelace example)
+#
+# Replace the three entity IDs below with the entities created by your
+# Home Assistant installation. Unique IDs are derived from the configured
+# robot URL, so entity IDs can differ between installs.
+#
+# REQUIRED placeholders:
+#   REPLACE_VACUUM_ENTITY   e.g. vacuum.hombot
+#   REPLACE_CAMERA_ENTITY   e.g. camera.hombot_camera
+#   REPLACE_BATTERY_ENTITY  e.g. sensor.hombot_battery
+#
+# This file is an example only. It does not install cards, modify dashboards,
+# or talk to the robot. The camera panel shows Home Assistant still snapshots,
+# not a guaranteed continuous live video stream.
+#
+# Uses only built-in Lovelace cards (vertical-stack, markdown, picture-entity,
+# horizontal-stack, button, entities). No custom frontend cards required.
+# Actions use perform-action (Home Assistant 2024.8+).
+
+type: vertical-stack
+cards:
+  - type: markdown
+    content: |
+      ## HomBot
+      **Status:** {{ states('REPLACE_VACUUM_ENTITY') }}
+      **Battery:** {{ states('REPLACE_BATTERY_ENTITY') }}%{% if state_attr('REPLACE_BATTERY_ENTITY', 'charging') %} (charging){% endif %}
+
+  - type: picture-entity
+    entity: REPLACE_CAMERA_ENTITY
+    camera_view: auto
+    show_name: false
+    show_state: false
+    aspect_ratio: "4:3"
+
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Start
+        icon: mdi:play
+        tap_action:
+          action: perform-action
+          perform_action: vacuum.start
+          target:
+            entity_id: REPLACE_VACUUM_ENTITY
+      - type: button
+        name: Pause
+        icon: mdi:pause
+        tap_action:
+          action: perform-action
+          perform_action: vacuum.pause
+          target:
+            entity_id: REPLACE_VACUUM_ENTITY
+      - type: button
+        name: Stop
+        icon: mdi:stop
+        tap_action:
+          action: perform-action
+          perform_action: vacuum.stop
+          target:
+            entity_id: REPLACE_VACUUM_ENTITY
+      - type: button
+        name: Dock
+        icon: mdi:home-import-outline
+        tap_action:
+          action: perform-action
+          perform_action: vacuum.return_to_base
+          target:
+            entity_id: REPLACE_VACUUM_ENTITY
+
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Turbo on
+        icon: mdi:fan-plus
+        tap_action:
+          action: perform-action
+          perform_action: vacuum.set_fan_speed
+          target:
+            entity_id: REPLACE_VACUUM_ENTITY
+          data:
+            fan_speed: Turbo
+      - type: button
+        name: Turbo off
+        icon: mdi:fan
+        tap_action:
+          action: perform-action
+          perform_action: vacuum.set_fan_speed
+          target:
+            entity_id: REPLACE_VACUUM_ENTITY
+          data:
+            fan_speed: Normal
+
+  # Optional read-only attributes exposed by the vacuum entity.
+  # Cleaning mode and repeat are status attributes only; this integration
+  # does not expose dedicated services to change them.
+  - type: entities
+    title: Status details
+    show_header_toggle: false
+    entities:
+      - type: attribute
+        entity: REPLACE_VACUUM_ENTITY
+        attribute: fan_speed
+        name: Fan speed
+      - type: attribute
+        entity: REPLACE_VACUUM_ENTITY
+        attribute: cleaning_mode
+        name: Cleaning mode
+      - type: attribute
+        entity: REPLACE_VACUUM_ENTITY
+        attribute: repeat_mode
+        name: Repeat
+      - type: attribute
+        entity: REPLACE_VACUUM_ENTITY
+        attribute: last_clean
+        name: Last cleaning
+      - type: attribute
+        entity: REPLACE_VACUUM_ENTITY
+        attribute: nickname
+        name: Nickname
+      - type: attribute
+        entity: REPLACE_VACUUM_ENTITY
+        attribute: firmware_version
+        name: Firmware
+      - type: attribute
+        entity: REPLACE_VACUUM_ENTITY
+        attribute: total_cleanings
+        name: Total cleanings

@@ -39,6 +39,13 @@ With the platform, you can access and display a range of data, such as the robot
 - 🔌 Charging status attribute
 - 📊 Proper Home Assistant battery device class
 
+### Camera Entity (`camera.*_camera`)
+- 📷 Still JPEG snapshots from the onboard HomBot camera
+- 🖼️ Native resolution 320 × 240
+- 🔁 On-demand fetch with a short cache (not a continuous live stream)
+
+A manual Lovelace overview example lives in [`examples/`](examples/).
+
 ## Setup
 
 If you know how to use HACS click here:
@@ -63,9 +70,10 @@ If not, follow this guide:
 
 - **Step 8: Perform a restart** Restart Home Assistant to activate the integration.
 
-- **Step 9: Start using the integration** After the restart, you'll find two entities:
+- **Step 9: Start using the integration** After the restart, you'll find entities such as:
   - `vacuum.lg_hombot` (or your configured name)
   - `sensor.lg_hombot_battery`
+  - `camera.lg_hombot_camera` (exact ID depends on your install)
 
 That's it! You have successfully integrated this repository into Home Assistant.
 
@@ -107,6 +115,10 @@ If you display battery level on your dashboard, update the entity reference from
 
 ## Breaking Changes
 
+- **Version 2.1.0**:
+  - Added an optional camera entity for onboard still snapshots
+  - Existing vacuum and battery entities are unchanged
+
 - **Version 2.0.0** (2026.8 compatibility):
   - Battery level moved to separate sensor entity `sensor.lg_hombot_battery`
   - Battery charging status available as sensor attribute
@@ -142,6 +154,12 @@ If you display battery level on your dashboard, update the entity reference from
 - Verify Wi-Fi dongle is properly installed on your Hombot
 - Check network connectivity to the robot
 - Test manually: `curl http://[IP]:6260/status.txt`
+
+### Camera entity missing or empty
+1. Confirm version 2.1.0 (or newer) is installed and Home Assistant was restarted
+2. Confirm `camera.py` exists under `custom_components/lg_hombot/`
+3. Check that the robot serves `http://[IP]:6260/images/snapshot.yuv` from a browser
+4. Check **Settings > System > Logs** for HomBot camera warnings
 
 ## Credits
 
