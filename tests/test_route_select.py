@@ -26,6 +26,7 @@ from lg_hombot.route_list_client import ROUTE_LIST_PATH
 from lg_hombot.route_render import footer_height
 from lg_hombot.select import HombotRouteSelect, SelectEntity
 from lg_hombot.sensor import HombotBatterySensor
+from lg_hombot.switch import HombotRepeatSwitch
 from lg_hombot.vacuum import HombotVacuum
 
 
@@ -126,10 +127,11 @@ async def _serve(handler) -> TestServer:
 
 
 def test_platforms_keep_vacuum_camera_sensor_and_add_select() -> None:
-    assert PLATFORMS == ["vacuum", "sensor", "camera", "image", "select"]
+    assert PLATFORMS == ["vacuum", "sensor", "camera", "image", "select", "switch"]
     assert HombotVacuum.__module__.endswith("vacuum")
     assert HombotCamera.__module__.endswith("camera")
     assert HombotBatterySensor.__module__.endswith("sensor")
+    assert HombotRepeatSwitch.__module__.endswith("switch")
 
 
 @pytest.mark.asyncio

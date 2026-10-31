@@ -8,9 +8,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from typing import Any
-from urllib.parse import quote
+import logging
 
 from .const import DOMAIN, SPEED_NORMAL, SPEED_TURBO, SUPPORTED_SERVICES, SUPPORTED_SPEEDS
+from .status import async_send_command, parse_status_text, publish_status
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entites: AddEntitiesCallback) -> None:
@@ -83,10 +86,7 @@ class HombotVacuum(StateVacuumEntity):
         response_body = response_bytes.decode("ascii")
 
         # parse body
-        attributes = {}
-        for line in response_body.splitlines():
-            name, var = line.partition("=")[::2]
-            attributes[name] = var.strip('"')
+        attributes = parse_status_text(response_body)
 
         # assign properties
         self._activity = self.convert_state(attributes.get("JSON_ROBOT_STATE"))
@@ -103,7 +103,12 @@ class HombotVacuum(StateVacuumEntity):
             "last_clean": attributes.get("CLREC_LAST_CLEAN"),
             "total_cleanings": attributes.get("CLREC_CURRENTBUMPING")
         }
-    
+        if self.hass is not None:
+            try:
+                publish_status(self.hass, self._url, attributes)
+            except Exception:  # noqa: BLE001 - publication must not fail the vacuum poll
+                _LOGGER.exception("HomBot status publication failed")
+
     def convert_state(self, current_state) -> VacuumActivity:
         """Convert the Hombot status to Home Assistant VacuumActivity."""
         match current_state:
@@ -152,12 +157,6 @@ class HombotVacuum(StateVacuumEntity):
 
     async def query(self, command) -> bool:
         """Execute command."""
-        # generate url
-        url = self._url + "json.cgi?" + quote(command)
-
-        # execute command
         session = async_get_clientsession(self.hass)
-        response = await session.get(url)
-        await response.read()
-
+        await async_send_command(session, self._url, command)
         return True

@@ -27,12 +27,22 @@ With the platform, you can access and display a range of data, such as the robot
 - ✅ Fan speed control (Normal/Turbo)
 - ✅ Activity monitoring (cleaning, docked, paused, returning, idle)
 - ✅ Extended attributes:
-  - Repeat mode status
-  - Cleaning mode
+  - Repeat mode status (`repeat_mode`, from `JSON_REPEAT`)
+  - Cleaning mode (`cleaning_mode`, the raw `JSON_MODE` value)
   - Robot nickname
   - Firmware version
   - Last cleaning timestamp
   - Total number of cleanings
+
+### Repeat switch (`switch.lg_hombot_repeat`)
+- ✅ Repeat on and off
+- ✅ State is read back from `JSON_REPEAT` in `status.txt`
+
+### Cleaning pattern (`select.lg_hombot_cleaning_pattern`)
+- ✅ Zigzag
+- ✅ Cell by cell
+- ✅ State is read back from `JSON_MODE` (`ZZ` or `SB`)
+- ✅ Any other or missing mode leaves the select unavailable
 
 ### Battery Sensor (`sensor.lg_hombot_battery`)
 - 🔋 Battery level (0-100%)
@@ -82,6 +92,8 @@ If not, follow this guide:
   - `vacuum.lg_hombot` (or your configured name)
   - `sensor.lg_hombot_battery`
   - `camera.lg_hombot_camera` (exact ID depends on your install)
+  - `switch.lg_hombot_repeat`
+  - `select.lg_hombot_cleaning_pattern`
 
 That's it! You have successfully integrated this repository into Home Assistant.
 

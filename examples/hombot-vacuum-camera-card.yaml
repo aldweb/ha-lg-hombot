@@ -8,6 +8,8 @@
 #   REPLACE_VACUUM_ENTITY   e.g. vacuum.hombot
 #   REPLACE_CAMERA_ENTITY   e.g. camera.hombot_camera
 #   REPLACE_BATTERY_ENTITY  e.g. sensor.hombot_battery
+#   REPLACE_REPEAT_ENTITY   e.g. switch.hombot_repeat
+#   REPLACE_PATTERN_ENTITY  e.g. select.hombot_cleaning_pattern
 #
 # This file is an example only. It does not install cards, modify dashboards,
 # or talk to the robot. The camera panel shows Home Assistant still snapshots,
@@ -90,9 +92,19 @@ cards:
           data:
             fan_speed: Normal
 
-  # Optional read-only attributes exposed by the vacuum entity.
-  # Cleaning mode and repeat are status attributes only; this integration
-  # does not expose dedicated services to change them.
+  - type: entities
+    title: Repeat and cleaning pattern
+    show_header_toggle: false
+    entities:
+      - entity: REPLACE_REPEAT_ENTITY
+        name: Repeat
+      - entity: REPLACE_PATTERN_ENTITY
+        name: Cleaning pattern
+
+  # Raw vacuum attributes. Repeat is changed with the switch above.
+  # The cleaning pattern is changed with the select above.
+  # cleaning_mode stays the robot value from JSON_MODE.
+  # repeat_mode stays the boolean read from JSON_REPEAT.
   - type: entities
     title: Status details
     show_header_toggle: false
