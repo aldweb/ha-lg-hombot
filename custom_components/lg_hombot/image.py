@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from inspect import isawaitable
 import logging
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
@@ -40,20 +41,47 @@ def render_learned_map_png(data: bytes) -> bytes:
     return buffer.getvalue()
 
 
+async def _add_platform_entities(
+    async_add_entities: AddEntitiesCallback,
+    entities: list,
+    *,
+    update_before_add: bool,
+) -> None:
+    """Register entities with Home Assistant.
+
+    The real callback schedules work and returns immediately. A coroutine
+    is awaited so an initial update performed by that callback finishes
+    before setup returns.
+    """
+
+    scheduled = async_add_entities(entities, update_before_add)
+    if isawaitable(scheduled):
+        await scheduled
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the learned map and the separate historical-route image."""
+    """Set up the learned map and the separate historical-route image.
+
+    Only the learned map asks for an update before it is added. The route
+    image has no map of its own until a historical run is chosen.
+    """
+
     url = config_entry.data.get("url")
     name = config_entry.data.get("name")
     state = get_route_history(hass, config_entry.entry_id)
-    async_add_entities(
-        [
-            HombotMapImage(hass, name, url),
-            HombotRouteImage(hass, name, url, state),
-        ]
+    await _add_platform_entities(
+        async_add_entities,
+        [HombotMapImage(hass, name, url)],
+        update_before_add=True,
+    )
+    await _add_platform_entities(
+        async_add_entities,
+        [HombotRouteImage(hass, name, url, state)],
+        update_before_add=False,
     )
 
 
