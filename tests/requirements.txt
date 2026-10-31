@@ -4,3 +4,6 @@ aiohttp>=3.9
 pillow>=10
 pytest>=8
 pytest-asyncio>=0.23
+# zoneinfo on Windows. Home Assistant Core already provides this,
+# so the integration manifest does not require it.
+tzdata>=2024.1
