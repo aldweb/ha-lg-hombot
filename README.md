@@ -44,6 +44,14 @@ With the platform, you can access and display a range of data, such as the robot
 - 🖼️ Native resolution 320 × 240
 - 🔁 On-demand fetch with a short cache (not a continuous live stream)
 
+### Learned Map (`image.*_map`)
+- 🗺️ Learned floor map from the robot
+- 📐 Floor area shown under the map
+
+### Historical Cleaning Route
+- 🧭 Select a past cleaning run
+- 🖼️ Route image with area, duration, distance and bumps
+
 A manual Lovelace overview example lives in [`examples/`](examples/).
 
 ## Setup
@@ -114,6 +122,11 @@ condition:
 If you display battery level on your dashboard, update the entity reference from the vacuum's attribute to the new sensor entity.
 
 ## Breaking Changes
+
+- **Version 2.2.0**:
+  - Added a learned-map image with the floor area
+  - Added a historical cleaning route with area, duration, distance and bumps
+  - Existing vacuum, battery and camera entities are unchanged
 
 - **Version 2.1.0**:
   - Added an optional camera entity for onboard still snapshots
