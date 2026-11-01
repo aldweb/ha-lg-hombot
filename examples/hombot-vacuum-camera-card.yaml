@@ -1,23 +1,29 @@
-# HomBot vacuum + camera overview (manual Lovelace example)
+# HomBot overview (manual Lovelace example)
 #
-# Replace the three entity IDs below with the entities created by your
-# Home Assistant installation. Unique IDs are derived from the configured
-# robot URL, so entity IDs can differ between installs.
+# Replace every placeholder with the entity IDs from your installation.
+# Unique IDs include the configured robot URL, so the IDs differ between installs.
 #
 # REQUIRED placeholders:
-#   REPLACE_VACUUM_ENTITY   e.g. vacuum.hombot
-#   REPLACE_CAMERA_ENTITY   e.g. camera.hombot_camera
-#   REPLACE_BATTERY_ENTITY  e.g. sensor.hombot_battery
-#   REPLACE_REPEAT_ENTITY   e.g. switch.hombot_repeat
-#   REPLACE_PATTERN_ENTITY  e.g. select.hombot_cleaning_pattern
+#   REPLACE_VACUUM_ENTITY        e.g. vacuum.hombot
+#   REPLACE_CAMERA_ENTITY        e.g. camera.hombot_camera
+#   REPLACE_BATTERY_ENTITY       e.g. sensor.hombot_battery
+#   REPLACE_REPEAT_ENTITY        e.g. switch.hombot_repeat
+#   REPLACE_PATTERN_ENTITY       e.g. select.hombot_cleaning_pattern
+#   REPLACE_MAP_ENTITY           e.g. image.hombot_map
+#   REPLACE_ROUTE_SELECT_ENTITY  e.g. select.hombot_cleaning_route
+#   REPLACE_ROUTE_IMAGE_ENTITY   e.g. image.hombot_route
 #
 # This file is an example only. It does not install cards, modify dashboards,
-# or talk to the robot. The camera panel shows Home Assistant still snapshots,
-# not a guaranteed continuous live video stream.
+# or talk to the robot. The camera panel shows still snapshots, not a
+# guaranteed continuous live video stream.
+#
+# The learned map is the stored floor map. The route image is one historical
+# cleaning and stays empty until a run is chosen below.
 #
 # Uses only built-in Lovelace cards (vertical-stack, markdown, picture-entity,
 # horizontal-stack, button, entities). No custom frontend cards required.
 # Actions use perform-action (Home Assistant 2024.8+).
+# picture-entity accepts the camera entity and the image entities.
 
 type: vertical-stack
 cards:
@@ -101,10 +107,40 @@ cards:
       - entity: REPLACE_PATTERN_ENTITY
         name: Cleaning pattern
 
-  # Raw vacuum attributes. Repeat is changed with the switch above.
-  # The cleaning pattern is changed with the select above.
-  # cleaning_mode stays the robot value from JSON_MODE.
-  # repeat_mode stays the boolean read from JSON_REPEAT.
+  - type: markdown
+    content: |
+      ## Maps
+      **Learned map** is the stored floor map. It does not depend on a cleaning run.
+      **Route** is one past cleaning. Choose a run below before that image appears.
+
+  - type: horizontal-stack
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: picture-entity
+            entity: REPLACE_MAP_ENTITY
+            show_name: false
+            show_state: false
+          - type: markdown
+            text_only: true
+            content: Learned map
+      - type: vertical-stack
+        cards:
+          - type: picture-entity
+            entity: REPLACE_ROUTE_IMAGE_ENTITY
+            show_name: false
+            show_state: false
+          - type: markdown
+            text_only: true
+            content: Historical route
+
+  - type: entities
+    title: Historical cleaning run
+    show_header_toggle: false
+    entities:
+      - entity: REPLACE_ROUTE_SELECT_ENTITY
+        name: Cleaning route
+
   - type: entities
     title: Status details
     show_header_toggle: false
