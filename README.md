@@ -135,6 +135,21 @@ If you display battery level on your dashboard, update the entity reference from
 
 ## Breaking Changes
 
+- **Version 2.2.1**:
+  - Removed the stray `hb.zip` archive that was shipped inside `custom_components/lg_hombot/` in 2.2.0
+  - The robot URL is now checked when it is added and always stored with a final `/`
+    (a URL entered without it used to break every entity); the same robot cannot be added twice
+  - The vacuum becomes unavailable when the robot cannot be reached, and the battery, Repeat and cleaning
+    pattern entities follow it instead of keeping their last value
+  - A robot nickname with non-ASCII characters no longer makes the status update fail
+  - A command rejected by the robot (or not delivered) now fails the service call, and the vacuum only
+    shows the new activity once the robot accepted the command
+  - The battery sensor no longer polls the robot on its own: it follows the vacuum update
+  - Learned map and route images render up to 50 times faster on large maps (output unchanged), and
+    refuse to draw a corrupt map with an absurd size
+  - Minimum Home Assistant version is now 2025.1.0 (`VacuumActivity`)
+  - Added a French translation of the setup form
+
 - **Version 2.2.0**:
   - Added a learned-map image with the floor area
   - Added a historical cleaning route with area, duration, distance and bumps
