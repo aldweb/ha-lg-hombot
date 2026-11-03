@@ -66,7 +66,17 @@ def _ensure_homeassistant_stubs() -> None:
         RETURNING = "returning"
 
     class StateVacuumEntity:
-        pass
+        """Minimal stand-in for homeassistant.components.vacuum.StateVacuumEntity."""
+
+        hass = None
+        _attr_available = True
+
+        def async_write_ha_state(self) -> None:
+            self.state_writes = getattr(self, "state_writes", 0) + 1
+
+        @property
+        def available(self):
+            return self._attr_available
 
     class SensorDeviceClass:
         BATTERY = "battery"
@@ -75,7 +85,27 @@ def _ensure_homeassistant_stubs() -> None:
         MEASUREMENT = "measurement"
 
     class SensorEntity:
-        pass
+        """Minimal stand-in for homeassistant.components.sensor.SensorEntity."""
+
+        _attr_available = True
+        _attr_native_value = None
+
+        async def async_added_to_hass(self) -> None:
+            return None
+
+        async def async_will_remove_from_hass(self) -> None:
+            return None
+
+        def async_write_ha_state(self) -> None:
+            self.state_writes = getattr(self, "state_writes", 0) + 1
+
+        @property
+        def available(self):
+            return self._attr_available
+
+        @property
+        def native_value(self):
+            return self._attr_native_value
 
     class Camera:
         def __init__(self) -> None:
@@ -171,6 +201,39 @@ def _ensure_homeassistant_stubs() -> None:
             super().__init__(**kwargs)
             self.__dict__.update(kwargs)
 
+    class ConfigFlowResult(dict):
+        pass
+
+    class ConfigFlow:
+        """Minimal stand-in for homeassistant.config_entries.ConfigFlow."""
+
+        configured_ids: set = set()
+
+        def __init_subclass__(cls, domain=None, **kwargs) -> None:
+            super().__init_subclass__(**kwargs)
+
+        async def async_set_unique_id(self, unique_id):
+            self.unique_id = unique_id
+
+        def _abort_if_unique_id_configured(self) -> None:
+            if self.unique_id in self.configured_ids:
+                raise AbortFlow("already_configured")
+
+        def async_show_form(self, *, step_id, data_schema=None, errors=None):
+            return ConfigFlowResult(
+                type="form", step_id=step_id, errors=errors or {}
+            )
+
+        def async_create_entry(self, *, title, data):
+            return ConfigFlowResult(type="create_entry", title=title, data=data)
+
+    class AbortFlow(Exception):
+        pass
+
+    config_entries.ConfigFlow = ConfigFlow
+    config_entries.ConfigFlowResult = ConfigFlowResult
+    const.CONF_NAME = "name"
+    const.CONF_URL = "url"
     const.Platform = Platform
     const.PERCENTAGE = "%"
     vacuum_mod.VacuumEntityFeature = VacuumEntityFeature

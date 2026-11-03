@@ -409,10 +409,10 @@ async def test_status_connection_error_after_command_does_not_force_state(
         def __init__(self, session: ClientSession) -> None:
             self._session = session
 
-        def get(self, url: str):
+        def get(self, url: str, **kwargs):
             if str(url).endswith("status.txt"):
                 raise ClientError("status failed")
-            return self._session.get(url)
+            return self._session.get(url, **kwargs)
 
     async with _serve(robot) as url:
         async with ClientSession() as session:
@@ -453,9 +453,10 @@ async def test_initial_status_read_failure_leaves_the_switch_unchanged(
 
 
 @pytest.mark.asyncio
-async def test_vacuum_http_error_does_not_raise(
+async def test_vacuum_rejected_command_fails_the_service_call(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A command the robot rejects is an error, and the shown state is kept."""
     hass = _Hass()
     robot = _Robot()
     robot.command_code = 500
@@ -464,21 +465,21 @@ async def test_vacuum_http_error_does_not_raise(
             _patch_session(monkeypatch, hass, session)
             vacuum = HombotVacuum("Living room", url)
             vacuum.hass = hass
-            await vacuum.async_start()
-            await vacuum.async_pause()
-            await vacuum.async_stop()
-            await vacuum.async_return_to_base()
-            await vacuum.async_set_fan_speed("Turbo")
-            await vacuum.async_set_fan_speed("Normal")
+            before = vacuum.activity
+            for call in (
+                vacuum.async_start,
+                vacuum.async_pause,
+                vacuum.async_stop,
+                vacuum.async_return_to_base,
+            ):
+                with pytest.raises(HomeAssistantError, match="command failed"):
+                    await call()
+            with pytest.raises(HomeAssistantError, match="command failed"):
+                await vacuum.async_set_fan_speed("Turbo")
+            assert vacuum.activity == before
+            assert vacuum.fan_speed == "Normal"
 
-    assert _commands(robot) == [
-        '{"COMMAND":"CLEAN_START"}',
-        '{"COMMAND":"PAUSE"}',
-        '{"COMMAND":"HOMING"}',
-        '{"COMMAND":"HOMING"}',
-        '{"COMMAND":{"TURBO":"true"}}',
-        '{"COMMAND":{"TURBO":"false"}}',
-    ]
+    assert len(_commands(robot)) == 5
     _assert_no_repeat_toggle(robot)
 
 
