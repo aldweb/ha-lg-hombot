@@ -15,6 +15,7 @@ import logging
 from datetime import datetime, timezone
 from functools import partial
 from io import BytesIO
+from typing import Any
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
@@ -29,8 +30,12 @@ from .cleaning_pattern import HombotCleaningPatternSelect
 from .const import DOMAIN
 from .route_client import HomBotRouteError, async_download_cleaning_run
 from .route_history import RouteHistoryState, get_route_history
-from .route_list import HistoricalRun, parse_route_list
-from .route_list_client import HomBotRouteListError, async_download_route_list
+from .route_list import HistoricalRun, RouteList, parse_maps_page, parse_route_list
+from .route_list_client import (
+    MAPS_PAGE_PATH,
+    HomBotRouteListError,
+    async_download_route_list,
+)
 from .route_render import render_route
 
 _LOGGER = logging.getLogger(__name__)
@@ -203,13 +208,30 @@ class HombotRouteSelect(SelectEntity):
                 return run
         return None
 
+    async def _async_fetch_route_list(self, session: Any) -> RouteList:
+        """Read the status document, else the maps page of older firmware.
+
+        Firmware without ``sites/maps/status.html`` answers with a text
+        error instead of JSON. Its ``maps.html`` page lists the same runs.
+        Only the maps page error is raised when both fail.
+        """
+
+        try:
+            payload = await async_download_route_list(session, self._url)
+            return parse_route_list(payload)
+        except (HomBotRouteListError, ValueError):
+            _LOGGER.debug("HomBot status document unavailable, trying maps page")
+        payload = await async_download_route_list(
+            session, self._url, path=MAPS_PAGE_PATH
+        )
+        return parse_maps_page(payload)
+
     async def _async_load_runs(self) -> None:
         """Fetch the status document once and keep every parsed run."""
 
         try:
             session = async_get_clientsession(self.hass)
-            payload = await async_download_route_list(session, self._url)
-            parsed = parse_route_list(payload)
+            parsed = await self._async_fetch_route_list(session)
         except (HomBotRouteListError, ValueError) as err:
             _LOGGER.warning("HomBot route list update failed: %s", err)
             self._apply_runs(())

@@ -14,6 +14,8 @@ from aiohttp import ClientError, ClientPayloadError, ClientSession, ClientTimeou
 
 
 ROUTE_LIST_PATH = "sites/maps/status.html"
+# Older firmware has no status document. Its maps page lists the same runs.
+MAPS_PAGE_PATH = "sites/maps.html"
 # The web interface uses an 8 second timeout for this document.
 REQUEST_TIMEOUT_SECONDS = 8.0
 # Ten file names fit in a few kilobytes. 64 KiB rejects an unexpected body.
@@ -24,16 +26,16 @@ class HomBotRouteListError(Exception):
     """Raised when the cleaning-run list cannot be downloaded."""
 
 
-def route_list_url(base_url: str) -> str:
-    """Append the status document to the configured robot URL.
+def route_list_url(base_url: str, path: str = ROUTE_LIST_PATH) -> str:
+    """Append a page path to the configured robot URL.
 
     The path is appended. A leading slash is not used, because ``urljoin``
     would replace the base path.
     """
 
     if base_url.endswith("/"):
-        return base_url + ROUTE_LIST_PATH
-    return base_url + "/" + ROUTE_LIST_PATH
+        return base_url + path
+    return base_url + "/" + path
 
 
 async def _async_read_body(response: Any, max_bytes: int) -> bytes:
@@ -87,16 +89,17 @@ async def async_download_route_list(
     session: ClientSession,
     base_url: str,
     *,
+    path: str = ROUTE_LIST_PATH,
     timeout_seconds: float = REQUEST_TIMEOUT_SECONDS,
     max_bytes: int = MAX_ROUTE_LIST_BYTES,
 ) -> bytes:
-    """Download ``sites/maps/status.html``.
+    """Download ``sites/maps/status.html``, or another page given by ``path``.
 
     Only HTTP 200 is accepted. The caller parses the bytes. An empty body
     is an error. Raises HomBotRouteListError without the request URL.
     """
 
-    url = route_list_url(base_url)
+    url = route_list_url(base_url, path)
     timeout = ClientTimeout(total=timeout_seconds)
     try:
         async with session.get(url, timeout=timeout) as response:

@@ -99,6 +99,18 @@ def listen_status(hass: Any, url: str, listener: StatusListener) -> Callable[[],
     return _remove
 
 
+def prune_status_listeners(domain_data: dict[str, Any]) -> None:
+    """Drop empty listener buckets, and the registry itself once it is empty."""
+
+    by_url = domain_data.get(STATUS_LISTENERS_KEY)
+    if not isinstance(by_url, dict):
+        return
+    for url in [url for url, bucket in by_url.items() if not bucket]:
+        del by_url[url]
+    if not by_url:
+        domain_data.pop(STATUS_LISTENERS_KEY, None)
+
+
 def publish_status(hass: Any, url: str, attributes: dict[str, str]) -> None:
     """Notify listeners. A listener error stays off the vacuum update."""
 

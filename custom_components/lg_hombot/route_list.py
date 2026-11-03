@@ -5,6 +5,10 @@ The browser reads ``sites/maps/status.html`` as JSON and uses ``blackbox``,
 not a cleaning run. This module only parses that document. It does not
 download files and does not import Home Assistant.
 
+Older firmware (lg.srv V2.51) has no such document. Its ``maps.html`` page
+holds the same two lists as the JavaScript arrays ``blkfiles`` and
+``bblfiles``, and ``parse_maps_page`` reads them.
+
 When several logs match one run, the last match is kept. That follows the
 active browser loop, which overwrites the chosen log on every hit. The
 match is tighter than that loop: ``U_475`` does not match ``U_4750``.
@@ -29,6 +33,11 @@ _FILENAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$")
 _MAPDATA_NAME = re.compile(
     r"^MAPDATA(?P<stamp>[0-9]{14})_[0-9]{6}_(?P<run_id>[^_]+)\.blk$"
 )
+
+
+_BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
+# A JavaScript string in single or double quotes, without escapes.
+_JS_STRING = re.compile(r"'([^']*)'|\"([^\"]*)\"")
 
 
 @dataclass(frozen=True)
@@ -69,6 +78,54 @@ def parse_route_list(data: str | bytes) -> RouteList:
         if run is not None
     ]
     return RouteList(runs=_unique_labels(runs))
+
+
+def parse_maps_page(data: str | bytes) -> RouteList:
+    """Parse the ``blkfiles`` and ``bblfiles`` arrays of a ``maps.html`` page.
+
+    The page pads the arrays with blank entries, and keeps an unused copy
+    of both arrays inside a comment. Comments are dropped first and the
+    first remaining declaration of each array is read. Runs are then built
+    exactly as for the status document.
+
+    Raises:
+        ValueError: The page is not text or does not declare both arrays.
+    """
+
+    if isinstance(data, bytes):
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError as err:
+            raise ValueError("HomBot maps page is not valid text") from err
+    elif isinstance(data, str):
+        text = data
+    else:
+        raise ValueError("HomBot maps page is not valid text")
+
+    text = _BLOCK_COMMENT.sub("", text)
+    maps = _read_js_array(text, "blkfiles")
+    logs = _read_js_array(text, "bblfiles")
+    if maps is None or logs is None:
+        raise ValueError("HomBot maps page has no cleaning file lists")
+
+    runs = [
+        run
+        for run in (_run_from_map_name(name, logs) for name in maps[:_MAX_MAPS])
+        if run is not None
+    ]
+    return RouteList(runs=_unique_labels(runs))
+
+
+def _read_js_array(text: str, name: str) -> list[str] | None:
+    """Return the quoted strings of the first ``name = [...]`` declaration."""
+
+    match = re.search(rf"\b{name}\s*=\s*\[(?P<body>[^\]]*)\]", text)
+    if match is None:
+        return None
+    return [
+        single if single is not None else double
+        for single, double in _JS_STRING.findall(match.group("body"))
+    ]
 
 
 def _load_document(data: str | bytes) -> object:

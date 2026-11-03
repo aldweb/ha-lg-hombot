@@ -6,6 +6,7 @@ from homeassistant.const import Platform
 
 from .const import DOMAIN
 from .route_history import ROUTE_HISTORY_KEY, RouteHistoryState
+from .status import prune_status_listeners
 
 PLATFORMS = [
     Platform.VACUUM,
@@ -28,7 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Unload platforms and drop this entry's shared route state."""
+    """Unload platforms and drop this entry's shared state."""
 
     unloaded = await hass.config_entries.async_unload_platforms(
         config_entry,
@@ -38,6 +39,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         domain_data = hass.data.get(DOMAIN)
         if isinstance(domain_data, dict):
             domain_data.pop(config_entry.entry_id, None)
+            prune_status_listeners(domain_data)
             if not domain_data:
                 hass.data.pop(DOMAIN, None)
     return unloaded

@@ -8,12 +8,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from typing import Any
-import logging
 
 from .const import DOMAIN, SPEED_NORMAL, SPEED_TURBO, SUPPORTED_SERVICES, SUPPORTED_SPEEDS
 from .status import async_send_command, parse_status_text, publish_status
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entites: AddEntitiesCallback) -> None:
@@ -104,10 +101,8 @@ class HombotVacuum(StateVacuumEntity):
             "total_cleanings": attributes.get("CLREC_CURRENTBUMPING")
         }
         if self.hass is not None:
-            try:
-                publish_status(self.hass, self._url, attributes)
-            except Exception:  # noqa: BLE001 - publication must not fail the vacuum poll
-                _LOGGER.exception("HomBot status publication failed")
+            # publish_status never raises: a listener error stays off this poll.
+            publish_status(self.hass, self._url, attributes)
 
     def convert_state(self, current_state) -> VacuumActivity:
         """Convert the Hombot status to Home Assistant VacuumActivity."""
