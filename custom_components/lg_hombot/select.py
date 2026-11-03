@@ -27,7 +27,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .bbl import BblLog
 from .blk import BlkMap
 from .cleaning_pattern import HombotCleaningPatternSelect
-from .const import DOMAIN
+from .device import hombot_device_info, normalize_url
 from .route_client import HomBotRouteError, async_download_cleaning_run
 from .route_history import RouteHistoryState, get_route_history
 from .route_list import HistoricalRun, RouteList, parse_maps_page, parse_route_list
@@ -65,7 +65,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the route selector, then the cleaning-pattern selector."""
 
-    url = config_entry.data.get("url")
+    url = normalize_url(config_entry.data.get("url"))
     name = config_entry.data.get("name")
     state = get_route_history(hass, config_entry.entry_id)
     async_add_entities([HombotRouteSelect(hass, name, url, state)])
@@ -102,18 +102,7 @@ class HombotRouteSelect(SelectEntity):
     def device_info(self) -> DeviceInfo:
         """Attach the selector to the same device as vacuum and camera."""
 
-        return DeviceInfo(
-            identifiers={(DOMAIN, f"hombot_{self._url}")},
-            name=self._name,
-            manufacturer="LG",
-            model="Hombot",
-            configuration_url=self._url,
-        )
-
-    async def async_get_last_state(self):
-        """Do not restore a previous route. That would download on startup."""
-
-        return None
+        return hombot_device_info(self._name, self._url)
 
     async def async_added_to_hass(self) -> None:
         """Load the run list once. Errors become an empty option list."""

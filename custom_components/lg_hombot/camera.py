@@ -11,7 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .device import hombot_device_info, normalize_url
 from .snapshot import JpegSnapshotCache, async_fetch_jpeg_snapshot
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the LG HomBot camera from a config entry."""
-    url = config_entry.data.get("url")
+    url = normalize_url(config_entry.data.get("url"))
     name = config_entry.data.get("name")
     async_add_entities([HombotCamera(name, url)])
 
@@ -51,13 +51,7 @@ class HombotCamera(Camera):
     @property
     def device_info(self) -> DeviceInfo:
         """Attach the camera to the same device as vacuum and battery."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, f"hombot_{self._url}")},
-            name=self._name,
-            manufacturer="LG",
-            model="Hombot",
-            configuration_url=self._url,
-        )
+        return hombot_device_info(self._name, self._url)
 
     async def async_camera_image(
         self,

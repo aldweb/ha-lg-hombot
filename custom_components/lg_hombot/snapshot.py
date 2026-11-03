@@ -49,7 +49,7 @@ class JpegSnapshotCache:
             if self._is_cache_valid(now):
                 return self._cache_image
 
-            # Temporary DEBUG timing for cache-miss fetch duration (HTTP+JPEG).
+            # DEBUG timing of a cache-miss fetch (HTTP + JPEG).
             # Do not log URLs, headers, tokens, or exception text here.
             t0 = time.monotonic()
             try:

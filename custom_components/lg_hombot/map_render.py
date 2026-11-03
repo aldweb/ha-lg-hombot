@@ -9,11 +9,15 @@ from __future__ import annotations
 
 from PIL import Image, ImageDraw
 
-from .blk import BlkMap, MapBlock
+from .blk import CELLS_PER_BLOCK, BlkMap, MapBlock
 
 
 PIXELS_PER_CELL = 8
 CELLS_PER_BLOCK_SIDE = 10
+
+# A real home is far below this (4000 x 4000 pixels, 48 MB as RGB). A corrupt
+# BLK file can place a block anywhere, so the size is checked before drawing.
+MAX_IMAGE_PIXELS = 16_000_000
 
 BACKGROUND_COLOR = (128, 128, 128)
 
@@ -160,29 +164,45 @@ def _draw_block_border(
         else COLOR_BLOCK_DEFAULT
     )
 
+    # Work on the block's own region only. Converting and compositing the
+    # whole canvas for every block made the render time grow with
+    # (blocks x image area). Pixels outside the outline stay untouched, and a
+    # stroke on the canvas edge is clipped there.
+    region_left = max(0, left)
+    region_top = max(0, top)
+    region_right = min(image.width, right + 1)
+    region_bottom = min(image.height, bottom + 1)
+
+    if region_left >= region_right or region_top >= region_bottom:
+        return
+
     border_layer = Image.new(
         "RGBA",
-        image.size,
+        (region_right - region_left, region_bottom - region_top),
         (0, 0, 0, 0),
     )
 
     draw = ImageDraw.Draw(border_layer)
 
     draw.rectangle(
-        (left, top, right, bottom),
+        (
+            left - region_left,
+            top - region_top,
+            right - region_left,
+            bottom - region_top,
+        ),
         outline=color,
         width=1,
     )
 
     # Alpha compositing requires both images to use RGBA.
-    # The final map remains RGB. The layer has the image size,
-    # so a stroke on the canvas edge is clipped there.
-    result = Image.alpha_composite(
-        image.convert("RGBA"),
-        border_layer,
-    ).convert("RGB")
+    # The final map remains RGB.
+    region = image.crop(
+        (region_left, region_top, region_right, region_bottom)
+    ).convert("RGBA")
+    result = Image.alpha_composite(region, border_layer).convert("RGB")
 
-    image.paste(result)
+    image.paste(result, (region_left, region_top))
 
 
 def render_map(
@@ -212,6 +232,12 @@ def render_map(
         max_y - min_y + 1
     ) * CELLS_PER_BLOCK_SIDE
 
+    if (
+        width_cells * PIXELS_PER_CELL * height_cells * PIXELS_PER_CELL
+        > MAX_IMAGE_PIXELS
+    ):
+        raise ValueError("BLK map extent is too large")
+
     image = Image.new(
         "RGB",
         (
@@ -221,12 +247,11 @@ def render_map(
         BACKGROUND_COLOR,
     )
 
-    # Draw each block's cells in the original file order.
+    # Draw each block's cells in the original file order. The reader stores
+    # exactly CELLS_PER_BLOCK cells per used block, one block after the other.
     for block_index, block in enumerate(map_data.blocks):
-        for cell in map_data.cells:
-            if cell.block_index != block_index:
-                continue
-
+        start = block_index * CELLS_PER_BLOCK
+        for cell in map_data.cells[start : start + CELLS_PER_BLOCK]:
             grid_x = (
                 block.x * CELLS_PER_BLOCK_SIDE
                 + cell.cell_index % CELLS_PER_BLOCK_SIDE

@@ -15,7 +15,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .blk import read_blk_bytes
-from .const import DOMAIN
+from .device import hombot_device_info, normalize_url
 from .map_client import HomBotMapError, async_download_learned_map
 from .route_render import render_learned_map
 from .route_history import RouteHistoryState, get_route_history
@@ -70,7 +70,7 @@ async def async_setup_entry(
     image has no map of its own until a historical run is chosen.
     """
 
-    url = config_entry.data.get("url")
+    url = normalize_url(config_entry.data.get("url"))
     name = config_entry.data.get("name")
     state = get_route_history(hass, config_entry.entry_id)
     await _add_platform_entities(
@@ -105,13 +105,7 @@ class HombotMapImage(ImageEntity):
     @property
     def device_info(self) -> DeviceInfo:
         """Attach the map to the same device as vacuum, battery, and camera."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, f"hombot_{self._url}")},
-            name=self._name,
-            manufacturer="LG",
-            model="Hombot",
-            configuration_url=self._url,
-        )
+        return hombot_device_info(self._name, self._url)
 
     async def async_update(self) -> None:
         """Download and render MapReuseNavi.
@@ -180,13 +174,7 @@ class HombotRouteImage(ImageEntity):
     @property
     def device_info(self) -> DeviceInfo:
         """Attach the route to the same device as vacuum, camera, and map."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, f"hombot_{self._url}")},
-            name=self._name,
-            manufacturer="LG",
-            model="Hombot",
-            configuration_url=self._url,
-        )
+        return hombot_device_info(self._name, self._url)
 
     async def async_added_to_hass(self) -> None:
         """Follow route renders that happen after this entity exists."""

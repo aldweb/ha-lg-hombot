@@ -1,21 +1,19 @@
 """Support for LG Hombot battery sensor."""
-from __future__ import annotations
 
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
+from __future__ import annotations
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
-
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN
+from .device import normalize_url
+from .entity import HombotStatusEntity
 
 
 async def async_setup_entry(
@@ -24,65 +22,39 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the LG Hombot battery sensor."""
-    url = config_entry.data.get("url")
+    url = normalize_url(config_entry.data.get("url"))
     name = config_entry.data.get("name")
 
-    async_add_entities([HombotBatterySensor(name, url)])
+    async_add_entities([HombotBatterySensor(hass, name, url)])
 
 
-class HombotBatterySensor(SensorEntity):
-    """Representation of LG Hombot battery level sensor."""
+class HombotBatterySensor(HombotStatusEntity, SensorEntity):
+    """Battery level, read from the status.txt the vacuum polls.
+
+    The sensor makes no request of its own: it follows the vacuum update, so
+    the robot is polled once per cycle.
+    """
 
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_has_entity_name = True
+    _attr_name = "Battery"
+    _attr_native_value: int | None = None
+    _label = "battery"
+    _unique_suffix = "battery"
 
-    def __init__(self, name: str, url: str) -> None:
-        """Initialize the battery sensor."""
-        self._name = name
-        self._url = url
-        self._attr_name = "Battery"
-        self._attr_unique_id = f"hombot_{url}_battery"
-        self._attr_native_value = None
+    def _apply_status(self, attributes: dict[str, str]) -> None:
+        """Map JSON_BATTPERC. A missing or invalid level makes the sensor unavailable."""
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            identifiers={
-                (DOMAIN, f"hombot_{self._url}")
-            },
-            name=self._name,
-            manufacturer="LG",
-            model="Hombot",
-            configuration_url=self._url
-        )
-
-    async def async_update(self) -> None:
-        """Fetch battery level from the device."""
         try:
-            url = self._url + "status.txt"
-            session = async_get_clientsession(self.hass)
-            response = await session.get(url)
-            response_bytes = await response.read()
-            response_body = response_bytes.decode("ascii")
+            level = int(attributes["JSON_BATTPERC"])
+        except (KeyError, TypeError, ValueError):
+            level = None
+        if level is not None and not 0 <= level <= 100:
+            level = None
 
-            # parse body
-            attributes = {}
-            for line in response_body.splitlines():
-                name, var = line.partition("=")[::2]
-                attributes[name] = var.strip('"')
-
-            battery_level = attributes.get("JSON_BATTPERC")
-            if battery_level is not None:
-                self._attr_native_value = int(battery_level)
-                
-            robot_state = attributes.get("JSON_ROBOT_STATE")
-            self._attr_extra_state_attributes = {
-                "charging": robot_state == "CHARGING"
-            }
-            
-        except Exception:
-            self._attr_native_value = None
-          
+        self._attr_native_value = level
+        self._attr_available = level is not None
+        self._attr_extra_state_attributes = {
+            "charging": attributes.get("JSON_ROBOT_STATE") == "CHARGING"
+        }

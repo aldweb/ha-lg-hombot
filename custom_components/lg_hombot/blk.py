@@ -31,7 +31,7 @@ class BlkHeader:
     cell_count: int
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MapBlock:
     turn: int
     move: int
@@ -47,7 +47,7 @@ class MapBlock:
         return self.posxy // 100
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MapCell:
     block_index: int
     cell_index: int

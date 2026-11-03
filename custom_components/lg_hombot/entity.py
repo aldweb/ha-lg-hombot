@@ -17,7 +17,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN
+from .device import hombot_device_info
 from .status import (
     HomBotCommandError,
     HomBotStatusError,
@@ -73,13 +73,7 @@ class HombotStatusEntity:
     def device_info(self) -> DeviceInfo:
         """Attach the entity to the same device as the vacuum."""
 
-        return DeviceInfo(
-            identifiers={(DOMAIN, f"hombot_{self._url}")},
-            name=self._name,
-            manufacturer="LG",
-            model="Hombot",
-            configuration_url=self._url,
-        )
+        return hombot_device_info(self._name, self._url)
 
     def _apply_status(self, attributes: dict[str, str]) -> None:
         """Map status.txt to the entity state. Set availability here."""

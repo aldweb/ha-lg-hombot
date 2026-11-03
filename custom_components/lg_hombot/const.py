@@ -2,18 +2,6 @@
 
 from homeassistant.components.vacuum import VacuumEntityFeature
 
-# hass 2025.1
-try:
-    from homeassistant.components.vacuum import VacuumActivity
-except (ModuleNotFoundError, ImportError):
-    from enum import StrEnum
-    
-    class VacuumActivity(StrEnum):
-        CLEANING = "cleaning"
-        DOCKED = "docked"
-        PAUSE = "pause"
-        RETURNING = "returning"
-
 DOMAIN = "lg_hombot"
 
 SUPPORTED_SERVICES = (

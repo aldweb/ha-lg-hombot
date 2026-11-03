@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .device import normalize_url
 from .entity import HombotStatusEntity
 
 REPEAT_COMMAND_ON = '{"COMMAND":{"REPEAT":"true"}}'
@@ -22,7 +23,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Repeat switch on the HomBot device."""
 
-    url = config_entry.data.get("url")
+    url = normalize_url(config_entry.data.get("url"))
     name = config_entry.data.get("name")
     async_add_entities([HombotRepeatSwitch(hass, name, url)])
 

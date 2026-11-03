@@ -7,13 +7,16 @@ import logging
 from typing import Any
 from urllib.parse import quote
 
-from aiohttp import ClientError
+from aiohttp import ClientError, ClientTimeout
 
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 STATUS_LISTENERS_KEY = "status_listeners"
+
+# The robot answers within a second on a healthy network.
+REQUEST_TIMEOUT_SECONDS = 10.0
 
 StatusListener = Callable[[dict[str, str]], None]
 
@@ -56,32 +59,33 @@ async def async_send_command(
     rejected command as sent pass ``require_ok``.
     """
 
+    timeout = ClientTimeout(total=REQUEST_TIMEOUT_SECONDS)
     try:
-        response = await session.get(command_url(base_url, command))
-        await response.read()
+        async with session.get(command_url(base_url, command), timeout=timeout) as response:
+            await response.read()
+            status = response.status
     except (ClientError, TimeoutError, OSError) as err:
         if not require_ok:
             raise
         raise HomBotCommandError("HomBot command request failed") from err
-    if require_ok and response.status != 200:
+    if require_ok and status != 200:
         raise HomBotCommandError("HomBot command was rejected")
 
 
 async def async_fetch_status(session: Any, base_url: str) -> dict[str, str]:
     """Read and parse status.txt. The HTTP result is not a command result."""
 
+    timeout = ClientTimeout(total=REQUEST_TIMEOUT_SECONDS)
     try:
-        response = await session.get(base_url + "status.txt")
-        body = await response.read()
+        async with session.get(base_url + "status.txt", timeout=timeout) as response:
+            body = await response.read()
+            status = response.status
     except (ClientError, TimeoutError, OSError) as err:
         raise HomBotStatusError("HomBot status request failed") from err
-    if response.status != 200:
+    if status != 200:
         raise HomBotStatusError("HomBot status request was rejected")
-    try:
-        text = body.decode("ascii")
-    except UnicodeError as err:
-        raise HomBotStatusError("HomBot status response is invalid") from err
-    return parse_status_text(text)
+    # A nickname may hold non-ASCII characters; they must not fail the poll.
+    return parse_status_text(body.decode("ascii", errors="replace"))
 
 
 def listen_status(hass: Any, url: str, listener: StatusListener) -> Callable[[], None]:
