@@ -1,8 +1,12 @@
-"""Select entity for one historical HomBot cleaning route.
+"""Select entities for the LG HomBot.
 
-The run list is loaded once when the entity is added. A failure leaves
-the options empty and does not fail the config entry. Nothing is selected
-until the user chooses a label, including after a restart.
+The historical-route selector loads its run list once when the entity is
+added. A failure leaves the options empty and does not fail the config
+entry. Nothing is selected until the user chooses a label, including
+after a restart.
+
+The cleaning-pattern selector is registered beside it. It does not use
+the route list or the route image.
 """
 
 from __future__ import annotations
@@ -21,6 +25,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .bbl import BblLog
 from .blk import BlkMap
+from .cleaning_pattern import HombotCleaningPatternSelect
 from .const import DOMAIN
 from .route_client import HomBotRouteError, async_download_cleaning_run
 from .route_history import RouteHistoryState, get_route_history
@@ -53,12 +58,13 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the cleaning-route selector from a config entry."""
+    """Set up the route selector, then the cleaning-pattern selector."""
 
     url = config_entry.data.get("url")
     name = config_entry.data.get("name")
     state = get_route_history(hass, config_entry.entry_id)
     async_add_entities([HombotRouteSelect(hass, name, url, state)])
+    async_add_entities([HombotCleaningPatternSelect(hass, name, url)])
 
 
 class HombotRouteSelect(SelectEntity):

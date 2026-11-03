@@ -6,6 +6,8 @@ Control and monitor your LG Hombot/Roboking vacuum cleaner from Home Assistant.
 - Start/Stop/Pause cleaning
 - Return to base
 - Fan speed control (Normal/Turbo)
+- Repeat on/off
+- Cleaning pattern: Zigzag or Cell by cell
 - Battery monitoring with charging status
 - Cleaning statistics
 

@@ -13,6 +13,7 @@ PLATFORMS = [
     Platform.CAMERA,
     Platform.IMAGE,
     Platform.SELECT,
+    Platform.SWITCH,
 ]
 
 
