@@ -1,0 +1,19 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "L'appareil est déjà configuré"
+        },
+        "error": {
+            "cannot_connect": "Échec de la connexion",
+            "invalid_url": "URL invalide. Utilisez un format comme http://192.168.1.10:6260/"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "name": "Nom",
+                    "url": "URL"
+                }
+            }
+        }
+    }
+}
