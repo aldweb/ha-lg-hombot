@@ -74,7 +74,7 @@ def _patch_session(monkeypatch: pytest.MonkeyPatch, hass: _Hass, session: Client
             raise AssertionError("session requested for a different Home Assistant")
         return session
 
-    monkeypatch.setattr("lg_hombot.cleaning_pattern.async_get_clientsession", _session)
+    monkeypatch.setattr("lg_hombot.entity.async_get_clientsession", _session)
     monkeypatch.setattr("lg_hombot.vacuum.async_get_clientsession", _session)
 
 
@@ -134,27 +134,27 @@ def test_pattern_select_uses_the_vacuum_device_and_a_stable_id() -> None:
 def test_mode_values_map_only_zz_and_sb() -> None:
     select = HombotCleaningPatternSelect(_Hass(), "Living room", URL)
 
-    select._apply_mode({"JSON_MODE": "ZZ"})
+    select._apply_status({"JSON_MODE": "ZZ"})
     assert select.current_option == "Zigzag"
     assert select.available is True
 
-    select._apply_mode({"JSON_MODE": "SB"})
+    select._apply_status({"JSON_MODE": "SB"})
     assert select.current_option == "Cell by cell"
     assert select.available is True
 
-    select._apply_mode({"JSON_ROBOT_STATE": "CHARGING"})
+    select._apply_status({"JSON_ROBOT_STATE": "CHARGING"})
     assert select.current_option is None
     assert select.available is False
 
-    select._apply_mode({"JSON_MODE": ""})
+    select._apply_status({"JSON_MODE": ""})
     assert select.current_option is None
     assert select.available is False
 
-    select._apply_mode({"JSON_MODE": "SPOT"})
+    select._apply_status({"JSON_MODE": "SPOT"})
     assert select.current_option is None
     assert select.available is False
 
-    select._apply_mode({"JSON_MODE": "zz"})
+    select._apply_status({"JSON_MODE": "zz"})
     assert select.current_option is None
     assert select.available is False
 
@@ -239,7 +239,7 @@ async def test_http_ok_does_not_confirm_an_unchanged_mode(
         async with ClientSession() as session:
             _patch_session(monkeypatch, hass, session)
             select = HombotCleaningPatternSelect(hass, "Living room", url)
-            select._apply_mode({"JSON_MODE": "SB"})
+            select._apply_status({"JSON_MODE": "SB"})
             await select.async_select_option("Zigzag")
 
     assert _commands(robot) == [PATTERN_COMMAND_ZIGZAG]
@@ -262,7 +262,7 @@ async def test_failed_command_leaves_the_selection_unchanged(
         async with ClientSession() as session:
             _patch_session(monkeypatch, hass, session)
             select = HombotCleaningPatternSelect(hass, "Living room", url)
-            select._apply_mode({"JSON_MODE": "SB"})
+            select._apply_status({"JSON_MODE": "SB"})
             with pytest.raises(HomeAssistantError, match="cleaning pattern command failed"):
                 await select.async_select_option("Zigzag")
 
@@ -285,13 +285,13 @@ async def test_command_connection_error_leaves_the_selection_unchanged(
             raise ClientError("connection failed")
 
     monkeypatch.setattr(
-        "lg_hombot.cleaning_pattern.async_get_clientsession",
+        "lg_hombot.entity.async_get_clientsession",
         lambda given: _BrokenSession() if given is hass else (_ for _ in ()).throw(
             AssertionError("session requested for a different Home Assistant")
         ),
     )
     select = HombotCleaningPatternSelect(hass, "Living room", URL)
-    select._apply_mode({"JSON_MODE": "ZZ"})
+    select._apply_status({"JSON_MODE": "ZZ"})
     with pytest.raises(HomeAssistantError, match="cleaning pattern command failed"):
         await select.async_select_option("Cell by cell")
 
@@ -311,7 +311,7 @@ async def test_failed_status_read_leaves_the_confirmed_option(
         async with ClientSession() as session:
             _patch_session(monkeypatch, hass, session)
             select = HombotCleaningPatternSelect(hass, "Living room", url)
-            select._apply_mode({"JSON_MODE": "ZZ"})
+            select._apply_status({"JSON_MODE": "ZZ"})
             with pytest.raises(
                 HomeAssistantError,
                 match="cleaning pattern status read failed",
@@ -336,7 +336,7 @@ async def test_unknown_option_sends_no_command(
         async with ClientSession() as session:
             _patch_session(monkeypatch, hass, session)
             select = HombotCleaningPatternSelect(hass, "Living room", url)
-            select._apply_mode({"JSON_MODE": "ZZ"})
+            select._apply_status({"JSON_MODE": "ZZ"})
             await select.async_select_option("Spot")
             await select.async_select_option("CLEAN_SPOT")
 
@@ -356,7 +356,7 @@ async def test_confirmed_option_is_not_sent_again(
         async with ClientSession() as session:
             _patch_session(monkeypatch, hass, session)
             select = HombotCleaningPatternSelect(hass, "Living room", url)
-            select._apply_mode({"JSON_MODE": "SB"})
+            select._apply_status({"JSON_MODE": "SB"})
             await select.async_select_option("Cell by cell")
 
     assert robot.requests == []

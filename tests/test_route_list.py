@@ -211,3 +211,53 @@ def test_filesystem_blackbox_prefix_is_accepted() -> None:
     text = _document(blackbox="/usr/data/blackbox/")
 
     assert parse_route_list(text).runs[0].run_id == "101"
+
+
+# Real maps.html of an lg.srv V2.51 robot: the lists are JavaScript arrays,
+# padded with blanks, and an unused copy sits inside a comment.
+MAPS_PAGE = """<html><head><script>
+var blkfiles = ['MAPDATA20261103123925_816228_2.blk', 'MAPDATA20261103123812_175757_1.blk', 'MAPDATA20260918153240_525491_0.blk', ' ', ' ', ' '];
+var bblfiles = ['cleanlog20261103123823_U_2.bbl', 'cleanlog20261103120841_U_1.bbl', ' ', ' ', ' '];
+var debug = false;
+/*
+if(blkfiles[0].substr(7,4) != '2015') debug = true;
+if(debug) {
+  var blkfiles = ['MAPDATA20150415110417_591483_40.blk'];
+  var bblfiles = ['cleanlog20150415100015_U_40.bbl'];
+}
+*/
+</script></head><body></body></html>"""
+
+
+def test_maps_page_lists_runs_and_skips_blanks_and_the_learned_map() -> None:
+    from lg_hombot.route_list import parse_maps_page
+
+    runs = parse_maps_page(MAPS_PAGE).runs
+    assert [run.run_id for run in runs] == ["2", "1"]
+    assert [run.bbl_name for run in runs] == [
+        "cleanlog20261103123823_U_2.bbl",
+        "cleanlog20261103120841_U_1.bbl",
+    ]
+    assert runs[0].label == "03.11.2026 - 12:39"
+
+
+def test_maps_page_ignores_the_commented_copy_of_the_arrays() -> None:
+    from lg_hombot.route_list import parse_maps_page
+
+    names = [run.blk_name for run in parse_maps_page(MAPS_PAGE.encode()).runs]
+    assert not any("2015" in name for name in names)
+
+
+@pytest.mark.parametrize(
+    "page",
+    [
+        "file not found : 401",
+        "var blkfiles = ['MAPDATA20261103123925_816228_2.blk'];",
+        b"\xff",
+    ],
+)
+def test_maps_page_without_both_lists_is_rejected(page: str | bytes) -> None:
+    from lg_hombot.route_list import parse_maps_page
+
+    with pytest.raises(ValueError):
+        parse_maps_page(page)

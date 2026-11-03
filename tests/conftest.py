@@ -8,6 +8,8 @@ from enum import IntFlag, StrEnum
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 CUSTOM_COMPONENTS = ROOT / "custom_components"
 
@@ -207,3 +209,9 @@ def _ensure_homeassistant_stubs() -> None:
 
 
 _ensure_homeassistant_stubs()
+
+
+@pytest.fixture(autouse=True)
+def _no_status_read_delay(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the post-command settle delay out of the unit tests."""
+    monkeypatch.setattr("lg_hombot.entity.STATUS_READ_DELAY", 0)

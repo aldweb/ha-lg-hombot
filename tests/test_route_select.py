@@ -9,6 +9,8 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from io import BytesIO
 
+from unittest.mock import ANY
+
 import pytest
 from aiohttp import ClientSession, web
 from aiohttp.test_utils import TestServer
@@ -25,6 +27,7 @@ from lg_hombot.route_list import HistoricalRun
 from lg_hombot.route_list_client import ROUTE_LIST_PATH
 from lg_hombot.route_render import footer_height
 from lg_hombot.select import HombotRouteSelect, SelectEntity
+from lg_hombot.status import STATUS_LISTENERS_KEY, listen_status
 from lg_hombot.sensor import HombotBatterySensor
 from lg_hombot.switch import HombotRepeatSwitch
 from lg_hombot.vacuum import HombotVacuum
@@ -154,6 +157,23 @@ async def test_setup_creates_route_state_before_platforms_and_unload_removes_it(
 
 
 @pytest.mark.asyncio
+async def test_unload_prunes_status_listeners_once_entities_are_gone() -> None:
+    hass = _Hass()
+    entry = _Entry("http://192.168.0.10:6260/")
+    await async_setup_entry(hass, entry)
+    remove = listen_status(hass, entry.data["url"], lambda _attributes: None)
+
+    # An entity is still registered: its bucket must survive the unload.
+    assert await async_unload_entry(hass, entry) is True
+    assert hass.data[DOMAIN] == {STATUS_LISTENERS_KEY: {entry.data["url"]: [ANY]}}
+
+    remove()
+    await async_setup_entry(hass, entry)
+    assert await async_unload_entry(hass, entry) is True
+    assert DOMAIN not in hass.data
+
+
+@pytest.mark.asyncio
 async def test_failed_unload_keeps_the_shared_state() -> None:
     hass = _Hass()
     entry = _Entry("http://192.168.0.10:6260/")
@@ -218,6 +238,46 @@ async def test_load_publishes_unique_labels_without_selecting_one(
         assert await route.async_image() is None
         assert learned._png is None
         assert seen == ["/" + ROUTE_LIST_PATH]
+    finally:
+        await server.close()
+
+
+@pytest.mark.asyncio
+async def test_older_firmware_lists_runs_from_the_maps_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """lg.srv V2.51 answers 200 with a text error for status.html."""
+
+    from lg_hombot.route_list_client import MAPS_PAGE_PATH
+    from test_route_list import MAPS_PAGE
+
+    seen: list[str] = []
+
+    async def handler(request: web.Request) -> web.Response:
+        seen.append(request.path)
+        if request.path == "/" + MAPS_PAGE_PATH:
+            return web.Response(text=MAPS_PAGE)
+        return web.Response(text="file not found : 401")
+
+    app = web.Application()
+    app.router.add_get("/" + ROUTE_LIST_PATH, handler)
+    app.router.add_get("/" + MAPS_PAGE_PATH, handler)
+    server = TestServer(app)
+    await server.start_server()
+    try:
+        hass = _Hass()
+        url = str(server.make_url("/"))
+        await async_setup_entry(hass, _Entry(url))
+        select, _route, _learned = _pair(hass, url)
+        async with ClientSession() as session:
+            monkeypatch.setattr(
+                "lg_hombot.select.async_get_clientsession",
+                lambda given: session,
+            )
+            await select.async_added_to_hass()
+
+        assert select.options == ["03.11.2026 - 12:39", "03.11.2026 - 12:38"]
+        assert seen == ["/" + ROUTE_LIST_PATH, "/" + MAPS_PAGE_PATH]
     finally:
         await server.close()
 

@@ -66,7 +66,7 @@ def _patch_session(monkeypatch: pytest.MonkeyPatch, hass: _Hass, session: Client
         return session
 
     monkeypatch.setattr("lg_hombot.vacuum.async_get_clientsession", _session)
-    monkeypatch.setattr("lg_hombot.switch.async_get_clientsession", _session)
+    monkeypatch.setattr("lg_hombot.entity.async_get_clientsession", _session)
 
 
 def _commands(robot: _Robot) -> list[str]:
@@ -107,22 +107,22 @@ def test_repeat_switch_uses_the_vacuum_device_and_a_stable_id() -> None:
 def test_repeat_status_values() -> None:
     switch = HombotRepeatSwitch(_Hass(), "Living room", URL)
 
-    switch._apply_repeat({"JSON_REPEAT": "true"})
+    switch._apply_status({"JSON_REPEAT": "true"})
     assert switch.is_on is True
     assert switch.available is True
 
-    switch._apply_repeat({"JSON_REPEAT": "false"})
+    switch._apply_status({"JSON_REPEAT": "false"})
     assert switch.is_on is False
     assert switch.available is True
 
-    switch._apply_repeat({"JSON_ROBOT_STATE": "CHARGING"})
+    switch._apply_status({"JSON_ROBOT_STATE": "CHARGING"})
     assert switch.available is False
 
-    switch._apply_repeat({"JSON_REPEAT": "yes"})
+    switch._apply_status({"JSON_REPEAT": "yes"})
     assert switch.available is False
-    switch._apply_repeat({"JSON_REPEAT": "TRUE"})
+    switch._apply_status({"JSON_REPEAT": "TRUE"})
     assert switch.available is False
-    switch._apply_repeat({"JSON_REPEAT": ""})
+    switch._apply_status({"JSON_REPEAT": ""})
     assert switch.available is False
 
 
@@ -351,13 +351,15 @@ async def test_status_publication_failure_does_not_fail_the_vacuum_update(
         "JSON_REPEAT=true\nJSON_ROBOT_STATE=CHARGING\nJSON_TURBO=false\n"
     )
 
-    def _boom(*_args, **_kwargs) -> None:
-        raise RuntimeError("publish failed")
+    class _BrokenData:
+        def get(self, *_args, **_kwargs):
+            raise RuntimeError("publish failed")
+
+    hass.data = _BrokenData()
 
     async with _serve(robot) as url:
         async with ClientSession() as session:
             _patch_session(monkeypatch, hass, session)
-            monkeypatch.setattr("lg_hombot.vacuum.publish_status", _boom)
             vacuum = HombotVacuum("Living room", url)
             vacuum.hass = hass
             await vacuum.async_update()
@@ -380,7 +382,7 @@ async def test_repeat_connection_error_fails_without_changing_state(
             raise ClientError("connection failed")
 
     monkeypatch.setattr(
-        "lg_hombot.switch.async_get_clientsession",
+        "lg_hombot.entity.async_get_clientsession",
         lambda given: _BrokenSession() if given is hass else (_ for _ in ()).throw(
             AssertionError("session requested for a different Home Assistant")
         ),
@@ -416,7 +418,7 @@ async def test_status_connection_error_after_command_does_not_force_state(
         async with ClientSession() as session:
             failing = _StatusFails(session)
             monkeypatch.setattr(
-                "lg_hombot.switch.async_get_clientsession",
+                "lg_hombot.entity.async_get_clientsession",
                 lambda given: failing if given is hass else (_ for _ in ()).throw(
                     AssertionError("session requested for a different Home Assistant")
                 ),
@@ -478,3 +480,39 @@ async def test_vacuum_http_error_does_not_raise(
         '{"COMMAND":{"TURBO":"false"}}',
     ]
     _assert_no_repeat_toggle(robot)
+
+
+@pytest.mark.asyncio
+async def test_repeat_waits_for_the_robot_before_reading_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    hass = _Hass()
+    robot = _Robot()
+    robot.status = "JSON_REPEAT=true\n"
+
+    async def _settle() -> None:
+        robot.requests.append("settle")
+
+    async with _serve(robot) as url:
+        async with ClientSession() as session:
+            _patch_session(monkeypatch, hass, session)
+            monkeypatch.setattr("lg_hombot.entity._settle", _settle)
+            switch = HombotRepeatSwitch(hass, "Living room", url)
+            await switch.async_turn_on()
+
+    assert [r.split("?")[0] for r in robot.requests] == [
+        "/json.cgi",
+        "settle",
+        "/status.txt",
+    ]
+    assert switch.is_on is True
+
+
+def test_repeat_unavailable_status_clears_the_state() -> None:
+    switch = HombotRepeatSwitch(_Hass(), "Living room", URL)
+    switch._apply_status({"JSON_REPEAT": "true"})
+    assert switch.available is True and switch.is_on is True
+
+    switch._apply_status({"JSON_REPEAT": "maybe"})
+    assert switch.available is False
+    assert switch.is_on is None
