@@ -96,6 +96,20 @@ class _Hass:
         self.unloaded: list[object] | None = None
         self.unload_result = True
         self.config_entries = self
+        # Latest-run selection: recorded and not run, unless a test sets run_background.
+        self.run_background = False
+        self.background_names: list[str] = []
+        self.background_tasks: list[asyncio.Task] = []
+
+    def async_create_background_task(self, coro, name, eager_start=True):
+        assert eager_start is False
+        self.background_names.append(name)
+        if not self.run_background:
+            coro.close()
+            return None
+        task = asyncio.get_running_loop().create_task(coro)
+        self.background_tasks.append(task)
+        return task
 
     async def async_add_executor_job(self, func, *args):
         self.executor_calls += 1
@@ -208,7 +222,7 @@ def test_route_entities_use_the_hombot_device_and_do_not_poll() -> None:
 
 
 @pytest.mark.asyncio
-async def test_load_publishes_unique_labels_without_selecting_one(
+async def test_load_publishes_unique_labels_and_schedules_the_latest_run(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     seen: list[str] = []
@@ -238,6 +252,7 @@ async def test_load_publishes_unique_labels_without_selecting_one(
         assert await route.async_image() is None
         assert learned._png is None
         assert seen == ["/" + ROUTE_LIST_PATH]
+        assert hass.background_names == ["lg_hombot select latest route"]
     finally:
         await server.close()
 
@@ -959,3 +974,185 @@ def _cleaning(bbl_name: str, blk_name: str, png: bytes) -> CleaningRun:
         blk_bytes=_synthetic_blk(),
         map_data=read_blk_bytes(_synthetic_blk()),
     )
+
+
+BLK_NEW = "MAPDATA20010202020221_000009_105.blk"
+BBL_NEW = "cleanlog20010202020202_U_105.bbl"
+LABEL_NEW = "02.02.2001 - 02:02"
+
+
+def _latest_handler(seen: list[str], *, newest_first: bool):
+    """A robot with an old run and a newer one, listed in either order."""
+    blk = _synthetic_blk()
+    runs = [(BLK_101, BBL_101), (BLK_NEW, BBL_NEW)]
+    if newest_first:
+        runs.reverse()
+
+    async def handler(request: web.Request) -> web.Response:
+        seen.append(request.path)
+        if request.path.endswith("status.html"):
+            return web.Response(body=_status(*runs))
+        if request.path.endswith(BBL_NEW):
+            return web.Response(body=_bbl(f"/usr/data/blackbox/{BLK_NEW}"))
+        if request.path.endswith(BBL_101):
+            return web.Response(body=_bbl(f"/usr/data/blackbox/{BLK_101}"))
+        if request.path.endswith((BLK_NEW, BLK_101)):
+            return web.Response(body=blk)
+        return web.Response(status=404, text="missing")
+
+    return handler
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("newest_first", [False, True])
+async def test_latest_run_is_selected_after_load_whatever_the_list_order(
+    monkeypatch: pytest.MonkeyPatch, newest_first: bool
+) -> None:
+    seen: list[str] = []
+    server = await _serve(_latest_handler(seen, newest_first=newest_first))
+    try:
+        hass = _Hass()
+        hass.run_background = True
+        url = str(server.make_url("/"))
+        await async_setup_entry(hass, _Entry(url))
+        select, route, _learned = _pair(hass, url)
+        async with ClientSession() as session:
+            monkeypatch.setattr(
+                "lg_hombot.select.async_get_clientsession", lambda given: session
+            )
+            await select.async_added_to_hass()
+            await route.async_added_to_hass()
+            # Setup is not held back by the download.
+            assert select.current_option is None
+            assert await route.async_image() is None
+            await asyncio.gather(*hass.background_tasks)
+
+        assert select.current_option == LABEL_NEW
+        assert select._state.selected_bbl_name == BBL_NEW
+        png = await route.async_image()
+        assert png is not None and png.startswith(b"\x89PNG")
+        assert BLACKBOX + BBL_NEW in seen and BLACKBOX + BBL_101 not in seen
+    finally:
+        await server.close()
+
+
+@pytest.mark.asyncio
+async def test_a_run_chosen_by_the_user_is_not_replaced_by_the_latest(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: list[str] = []
+    server = await _serve(_latest_handler(seen, newest_first=False))
+    try:
+        hass = _Hass()
+        hass.run_background = True
+        url = str(server.make_url("/"))
+        await async_setup_entry(hass, _Entry(url))
+        select, _route, _learned = _pair(hass, url)
+        async with ClientSession() as session:
+            monkeypatch.setattr(
+                "lg_hombot.select.async_get_clientsession", lambda given: session
+            )
+            await select.async_added_to_hass()
+            # The user picks before the background task gets to run.
+            await select.async_select_option(LABEL_ONE)
+            await asyncio.gather(*hass.background_tasks)
+
+        assert select.current_option == LABEL_ONE
+        assert select._state.selected_bbl_name == BBL_101
+        assert BLACKBOX + BBL_NEW not in seen
+    finally:
+        await server.close()
+
+
+@pytest.mark.asyncio
+async def test_a_failed_latest_download_can_be_retried_by_choosing_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def handler(request: web.Request) -> web.Response:
+        if request.path.endswith("status.html"):
+            return web.Response(body=_status((BLK_101, BBL_101)))
+        return web.Response(status=500, text="boom")
+
+    server = await _serve(handler)
+    try:
+        hass = _Hass()
+        hass.run_background = True
+        url = str(server.make_url("/"))
+        await async_setup_entry(hass, _Entry(url))
+        select, route, _learned = _pair(hass, url)
+        async with ClientSession() as session:
+            monkeypatch.setattr(
+                "lg_hombot.select.async_get_clientsession", lambda given: session
+            )
+            await select.async_added_to_hass()
+            await asyncio.gather(*hass.background_tasks)
+
+        assert select.options == [LABEL_ONE]
+        assert select.current_option == LABEL_ONE
+        assert select._state.selected_bbl_name is None
+        assert await route.async_image() is None
+    finally:
+        await server.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["invalid", "missing"])
+async def test_nothing_is_scheduled_without_a_usable_list(
+    monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    async def handler(_: web.Request) -> web.Response:
+        if failure == "invalid":
+            return web.Response(body=b"{")
+        return web.Response(status=404, text="missing")
+
+    server = await _serve(handler)
+    try:
+        hass = _Hass()
+        hass.run_background = True
+        url = str(server.make_url("/"))
+        await async_setup_entry(hass, _Entry(url))
+        select, _route, _learned = _pair(hass, url)
+        async with ClientSession() as session:
+            monkeypatch.setattr(
+                "lg_hombot.select.async_get_clientsession", lambda given: session
+            )
+            await select.async_added_to_hass()
+        assert hass.background_names == []
+        assert select.options == [] and select.current_option is None
+    finally:
+        await server.close()
+
+
+@pytest.mark.asyncio
+async def test_removing_the_entity_cancels_a_pending_latest_selection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    started = asyncio.Event()
+
+    async def handler(request: web.Request) -> web.Response:
+        if request.path.endswith("status.html"):
+            return web.Response(body=_status((BLK_101, BBL_101)))
+        started.set()
+        await asyncio.sleep(30)
+        return web.Response(status=500)
+
+    server = await _serve(handler)
+    try:
+        hass = _Hass()
+        hass.run_background = True
+        url = str(server.make_url("/"))
+        await async_setup_entry(hass, _Entry(url))
+        select, _route, _learned = _pair(hass, url)
+        async with ClientSession() as session:
+            monkeypatch.setattr(
+                "lg_hombot.select.async_get_clientsession", lambda given: session
+            )
+            await select.async_added_to_hass()
+            await asyncio.wait_for(started.wait(), 5)
+            await select.async_will_remove_from_hass()
+            (task,) = hass.background_tasks
+            with pytest.raises(asyncio.CancelledError):
+                await task
+        assert task.cancelled()
+    finally:
+        await server.close()
