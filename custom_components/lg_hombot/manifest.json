@@ -1,6 +1,7 @@
 {
     "domain": "lg_hombot",
     "name": "LG Hombot",
+    "categories": ["appliances_cleaning.cleaning"],    
     "codeowners": [
         "@ericpignet",
         "@plakna",
@@ -13,5 +14,5 @@
     "iot_class": "local_polling",
     "issue_tracker": "https://github.com/aldweb/ha-lg-hombot/issues",
     "requirements": [],
-    "version": "2.2.1"
+    "version": "2.2.2"
 }
