@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
 
 
@@ -58,6 +59,27 @@ class RouteList:
     """
 
     runs: tuple[HistoricalRun, ...]
+
+
+def latest_run(runs: Iterable[HistoricalRun]) -> HistoricalRun | None:
+    """Return the most recent cleaning run, or None when there is none.
+
+    The order of the robot's list is not relied upon: the newest MAPDATA
+    timestamp wins. Runs saved in the same minute are ordered by their
+    numeric run id, then by their position in the list.
+    """
+
+    best: HistoricalRun | None = None
+    best_key: tuple[str, int, int] | None = None
+    for index, run in enumerate(runs):
+        match = _MAPDATA_NAME.fullmatch(run.blk_name)
+        if match is None:
+            continue
+        number = int(run.run_id) if run.run_id.isdigit() else -1
+        key = (match.group("stamp"), number, index)
+        if best_key is None or key > best_key:
+            best, best_key = run, key
+    return best
 
 
 def parse_route_list(data: str | bytes) -> RouteList:
